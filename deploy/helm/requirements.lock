@@ -1,0 +1,6 @@
+dependencies:
+- name: prometheus
+  repository: https://videocoin-charts.storage.googleapis.com/
+  version: 0.0.1
+digest: sha256:3efbd9679ddb98868aa19b2d3210aa74e1534fbe76392f6d68f16f56a17fb3eb
+generated: 2020-01-04T23:40:55.637731593+03:00

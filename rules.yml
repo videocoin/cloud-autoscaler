@@ -1,0 +1,11 @@
+rules:
+  - alertname: NeedMoreTranscoders
+    scale: up
+    project: videocoin-network
+    zone: us-central1-a
+    template: dev-transcoder
+  - alertname: NeedLessTranscoders
+    scale: down
+    project: videocoin-network
+    zone: us-central1-a
+    template: dev-transcoder

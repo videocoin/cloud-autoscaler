@@ -1,0 +1,12 @@
+configRules:
+  rules:
+  - alertname: NeedMoreTranscoders
+    scale: up
+    project: videocoin-network
+    zone: us-central1-a
+    template: snb-transcoder
+  - alertname: NeedLessTranscoders
+    scale: down
+    project: videocoin-network
+    zone: us-central1-a
+    template: snb-transcoder

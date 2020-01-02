@@ -1,0 +1,25 @@
+replicasCount: 1
+maxUnavailableCount: 1
+
+image:
+  repository: gcr.io/videocoin-network/autoscaler
+  tag: latest
+  pullPolicy: Always
+
+service:
+  name: http
+  type: NodePort
+  externalPort: 80
+  internalPort: 8013
+
+resources: {}
+config: {}
+secrets: {}
+
+prometheus:
+  nodeExporter:
+    enabled: false
+  kubeStateMetrics:
+    enabled: true
+  pushgateway:
+    enabled: true

@@ -1,0 +1,68 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicasCount }}
+  strategy:
+    rollingUpdate:
+      maxUnavailable: {{ .Values.maxUnavailableCount }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.service.internalPort }}"
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.internalPort }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.service.internalPort }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.service.internalPort }}
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: CONSUL_ADDR
+              value: config-consul:8500
+            - name: ADDR
+              value: $(POD_IP):{{ .Values.service.internalPort }}
+            - name: SENTRY_DSN
+              value: {{ .Values.secrets.sentryDsn | b64dec }}
+            # - name: AUTOSCALER_RULESPATH
+            #   value: /etc/autoscaler/rules.yml
+          {{- if .Values.resources }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/autoscaler
+            - name: secrets
+              mountPath: /secrets
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Chart.Name }}
+        - name: secrets
+          secret:
+            secretName: {{ .Chart.Name }}
