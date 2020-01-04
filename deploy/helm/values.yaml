@@ -60,3 +60,7 @@ prometheus:
           static_configs:
             - targets:
               - dispatcher:15008
+        - job_name: autoscaler
+          static_configs:
+            - targets:
+              - autoscaler:80
