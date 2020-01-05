@@ -24,6 +24,9 @@ func (s *Server) prometheusWebhook(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	s.logger.Debugf("webhook message: %+v", msg)
+	s.logger.Debugf("webhook message alerts: %+v", msg.Alerts)
+
 	err = validatePromWebhookMessage(msg)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
