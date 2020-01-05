@@ -12,11 +12,12 @@ const (
 )
 
 type Rule struct {
-	AlertName string `yaml:"alertname"`
-	Scale     string `yaml:"scale"`
-	Project   string `yaml:"project"`
-	Zone      string `yaml:"zone"`
-	Template  string `template:"template"`
+	AlertName   string `yaml:"alertname"`
+	Scale       string `yaml:"scale"`
+	Project     string `yaml:"project"`
+	Zone        string `yaml:"zone"`
+	Template    string `yaml:"template"`
+	MachineType string `yaml:"-"`
 }
 
 func (r *Rule) IsScaleUp() bool {

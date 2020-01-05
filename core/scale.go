@@ -14,13 +14,13 @@ import (
 )
 
 func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
-	s.logger.Info("scaling up")
+	s.logger.WithField("machine_type", rule.MachineType).Info("scaling up")
 
 	floatCount := float64(count)
 
 	m := s.Metrics.Instances
-	m.WithLabelValues(metrics.InstanceStatusCreating).Sub(-1 * floatCount)
-	defer m.WithLabelValues(metrics.InstanceStatusCreating).Sub(floatCount)
+	m.WithLabelValues(metrics.InstanceStatusCreating, rule.MachineType).Sub(-1 * floatCount)
+	defer m.WithLabelValues(metrics.InstanceStatusCreating, rule.MachineType).Sub(floatCount)
 
 	var wg sync.WaitGroup
 	c := count

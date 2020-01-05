@@ -29,7 +29,7 @@ func NewMetrics(namespace string, rules types.Rules) *Metrics {
 				Name:      "instances",
 				Help:      "Count of instances in progress",
 			},
-			[]string{"status"},
+			[]string{"status", "machine_type"},
 		),
 	}
 }
@@ -38,6 +38,6 @@ func (m *Metrics) RegisterAll() {
 	prometheus.MustRegister(m.Instances)
 
 	for _, status := range InstanceStatuses {
-		m.Instances.WithLabelValues(status).Set(0)
+		m.Instances.WithLabelValues(status, "").Set(0)
 	}
 }

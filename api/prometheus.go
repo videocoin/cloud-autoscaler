@@ -39,6 +39,10 @@ func (s *Server) prometheusWebhook(c echo.Context) error {
 			break
 		}
 
+		if alert.Labels["machine_type"] != "" {
+			rule.MachineType = alert.Labels["machine_type"]
+		}
+
 		count, _ := strconv.ParseUint(alert.Annotations["count"], 0, 32)
 		if count > 0 {
 			if rule.IsScaleUp() {
