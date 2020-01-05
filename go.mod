@@ -3,6 +3,7 @@ module github.com/videocoin/cloud-autoscaler
 go 1.12
 
 require (
+	cloud.google.com/go v0.38.0
 	github.com/certifi/gocertifi v0.0.0-20191021191039-0944d244cd40 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/ghodss/yaml v1.0.0

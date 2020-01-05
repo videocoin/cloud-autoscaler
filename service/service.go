@@ -22,7 +22,10 @@ func NewService(cfg *Config) (*Service, error) {
 	}
 
 	metrics := metrics.NewMetrics(cfg.Name, cfg.Rules)
-	metrics.RegisterAll()
+	err = metrics.RegisterAll()
+	if err != nil {
+		return nil, err
+	}
 
 	autoscaler, err := core.NewAutoScaler(cfg.Logger, sdcli, metrics, cfg.Rules)
 	if err != nil {
