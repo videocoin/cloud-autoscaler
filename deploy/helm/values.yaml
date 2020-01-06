@@ -44,7 +44,24 @@ prometheus:
             match_re:
               alertname: NeedMoreTranscoders|NeedLessTranscoders
   serverFiles:
-    alerts: ""
+    alerts: |-
+      job:transcoder_needs = sum(dispatcher_tasks_total{status="PENDING"}) without (instance,job,status) - sum(autoscaler_instances{status="creating"}) without (instance,job,status) > 0
+      job:transcoder_idle = avg_over_time(miners_internal_miner_status{status="IDLE"}[30s]) == 1
+
+      ALERT NeedMoreTranscoders
+        IF job:transcoder_needs > 0
+        ANNOTATIONS {
+            summary = "Need to create {{ $value }} transcoders",
+            count = "{{ $value }}"
+        }
+
+      ALERT NeedLessTranscoders
+        IF job:transcoder_idle > 0
+        FOR 600s
+        ANNOTATIONS {
+            summary = "Need to delete {{ $value }} transcoders",
+            count = "{{ $value }}"
+        }
     rules: ""
     prometheus.yml: |-
       global:
@@ -64,3 +81,7 @@ prometheus:
           static_configs:
             - targets:
               - autoscaler:80
+        - job_name: miners
+          static_configs:
+            - targets:
+              - miners:15011
