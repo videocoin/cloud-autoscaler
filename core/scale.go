@@ -150,8 +150,8 @@ func (s *AutoScaler) removeInstance(rule types.Rule, name string) error {
 	ilogger := s.logger.WithField("instance", name)
 
 	m := s.Metrics.Instances
-	m.WithLabelValues(metrics.InstanceStatusRemoving).Inc()
-	defer m.WithLabelValues(metrics.InstanceStatusRemoving).Dec()
+	m.WithLabelValues(metrics.InstanceStatusRemoving, rule.MachineType).Inc()
+	defer m.WithLabelValues(metrics.InstanceStatusRemoving, rule.MachineType).Dec()
 
 	_, err := s.compute.Instances.Delete(rule.Project, rule.Zone, name).Do()
 	if err != nil {
