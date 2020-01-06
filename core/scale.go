@@ -149,11 +149,17 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 func (s *AutoScaler) removeInstance(rule types.Rule, name string) error {
 	ilogger := s.logger.WithField("instance", name)
 
-	m := s.Metrics.Instances
-	m.WithLabelValues(metrics.InstanceStatusRemoving, rule.MachineType).Inc()
-	defer m.WithLabelValues(metrics.InstanceStatusRemoving, rule.MachineType).Dec()
+	instance, err := s.compute.Instances.Get(rule.Project, rule.Zone, name).Do()
+	if err != nil {
+		ilogger.Error(err.Error())
+		return err
+	}
 
-	_, err := s.compute.Instances.Delete(rule.Project, rule.Zone, name).Do()
+	m := s.Metrics.Instances
+	m.WithLabelValues(metrics.InstanceStatusRemoving, instance.MachineType).Inc()
+	defer m.WithLabelValues(metrics.InstanceStatusRemoving, instance.MachineType).Dec()
+
+	_, err = s.compute.Instances.Delete(rule.Project, rule.Zone, instance.Name).Do()
 	if err != nil {
 		ilogger.Error(err.Error())
 		return err
