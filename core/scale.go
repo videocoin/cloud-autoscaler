@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -85,11 +84,12 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		return err
 	}
 
-	machineTypeURL := fmt.Sprintf(
-		"zones/%s/machineTypes/%s",
-		rule.Zone,
-		template.Properties.MachineType,
-	)
+	mt := template.Properties.MachineType
+	if rule.MachineType != "" {
+		mt = rule.MachineType
+	}
+
+	machineTypeURL := fmt.Sprintf("zones/%s/machineTypes/%s", rule.Zone, mt)
 
 	var disks []*compute.AttachedDisk
 
@@ -139,38 +139,6 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 			"name":   newInstance.Name,
 			"status": newInstance.Status,
 		}).Info("current status")
-
-		if newInstance.NetworkInterfaces[0].NetworkIP != "" {
-			healthAddr := fmt.Sprintf(
-				"http://%s:8011/healthz",
-				newInstance.NetworkInterfaces[0].NetworkIP,
-			)
-
-			ilogger.WithFields(logrus.Fields{
-				"name":        newInstance.Name,
-				"health_addr": healthAddr,
-			}).Info("getting health")
-
-			resp, err := http.Get(healthAddr)
-			if err != nil {
-				ilogger.WithFields(logrus.Fields{
-					"name":        newInstance.Name,
-					"health_addr": healthAddr,
-				}).Warnf("failed to get health: %s", err)
-
-				time.Sleep(time.Second * 5)
-				continue
-			}
-
-			if resp != nil && resp.StatusCode == 200 {
-				ilogger.WithFields(logrus.Fields{
-					"name":        newInstance.Name,
-					"health_addr": healthAddr,
-				}).Info("transcoder has been started")
-
-				break
-			}
-		}
 
 		time.Sleep(time.Second * 5)
 	}
