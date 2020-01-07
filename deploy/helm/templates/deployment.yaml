@@ -19,6 +19,8 @@ spec:
       labels:
         app: {{ .Chart.Name }}
     spec:
+      nodeSelector:
+        cloud.google.com/gke-nodepool: api
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
