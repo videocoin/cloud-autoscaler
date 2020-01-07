@@ -57,7 +57,7 @@ prometheus:
 
       ALERT NeedLessTranscoders
         IF job:transcoder_idle > 0
-        FOR 600s
+        FOR 120s
         ANNOTATIONS {
             summary = "Need to delete {{ $value }} transcoders",
             count = "{{ $value }}"
