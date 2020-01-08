@@ -149,7 +149,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		}).Info("current status")
 
 		if newInstance.Status == "RUNNING" {
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Second * 60)
 			break
 		}
 
