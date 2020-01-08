@@ -1,6 +1,8 @@
 package types
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
 	ErrRuleNotFound = errors.New("rule not found")
@@ -12,12 +14,9 @@ const (
 )
 
 type Rule struct {
-	AlertName   string `yaml:"alertname"`
-	Scale       string `yaml:"scale"`
-	Project     string `yaml:"project"`
-	Zone        string `yaml:"zone"`
-	Template    string `yaml:"template"`
-	MachineType string `yaml:"-"`
+	AlertName string    `yaml:"alertname"`
+	Scale     string    `yaml:"scale"`
+	Instance  *Instance `yaml:"instance"`
 }
 
 func (r *Rule) IsScaleUp() bool {

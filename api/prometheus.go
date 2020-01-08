@@ -39,7 +39,7 @@ func (s *Server) prometheusWebhook(c echo.Context) error {
 		}
 
 		if alert.Labels["machine_type"] != "" {
-			rule.MachineType = alert.Labels["machine_type"]
+			rule.Instance.MachineType = alert.Labels["machine_type"]
 		}
 
 		count, _ := strconv.ParseUint(alert.Annotations["count"], 0, 32)
@@ -49,7 +49,7 @@ func (s *Server) prometheusWebhook(c echo.Context) error {
 			}
 
 			if rule.IsScaleDown() {
-				go s.AutoScaler.ScaleDown(*rule, uint(count))
+				go s.AutoScaler.ScaleDown(*rule, alert.Labels["hostname"])
 			}
 		}
 	}

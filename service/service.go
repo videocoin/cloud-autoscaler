@@ -5,29 +5,22 @@ import (
 	"github.com/videocoin/cloud-autoscaler/api"
 	"github.com/videocoin/cloud-autoscaler/core"
 	"github.com/videocoin/cloud-autoscaler/metrics"
-	"github.com/videocoin/cloud-autoscaler/pkg/sd"
 )
 
 type Service struct {
 	cfg       *Config
-	sd        *sd.Client
 	apiServer *api.Server
 	info      *consulapi.AgentService
 }
 
 func NewService(cfg *Config) (*Service, error) {
-	sdcli, err := sd.NewClient(cfg.ConsulAddr)
-	if err != nil {
-		return nil, err
-	}
-
 	metrics := metrics.NewMetrics(cfg.Name, cfg.Rules)
-	err = metrics.RegisterAll()
+	err := metrics.RegisterAll()
 	if err != nil {
 		return nil, err
 	}
 
-	autoscaler, err := core.NewAutoScaler(cfg.Logger, sdcli, metrics, cfg.Rules)
+	autoscaler, err := core.NewAutoScaler(cfg.Logger, metrics, cfg.Rules)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +34,6 @@ func NewService(cfg *Config) (*Service, error) {
 
 	s := &Service{
 		cfg:       cfg,
-		sd:        sdcli,
 		apiServer: apiServer,
 	}
 

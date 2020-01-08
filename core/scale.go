@@ -6,20 +6,34 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/cloud-autoscaler/metrics"
 	"github.com/videocoin/cloud-autoscaler/types"
-	compute "google.golang.org/api/compute/v1"
+	computev1 "google.golang.org/api/compute/v1"
 )
 
+var containerDeclTpl = `
+spec:
+  containers:
+  - name: %s
+    image: '%s'
+    env:
+      - name: INTERNAL
+        value: '1'
+    stdin: false
+    tty: false
+  restartPolicy: Always
+`
+
 func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
-	s.logger.WithField("machine_type", rule.MachineType).Info("scaling up")
+	s.logger.WithField("machine_type", rule.Instance.MachineType).Info("scaling up")
 
 	floatCount := float64(count)
 
 	m := s.Metrics.Instances
-	m.WithLabelValues(metrics.InstanceStatusCreating, rule.MachineType).Sub(-1 * floatCount)
-	defer m.WithLabelValues(metrics.InstanceStatusCreating, rule.MachineType).Sub(floatCount)
+	m.WithLabelValues(metrics.InstanceStatusCreating, rule.Instance.MachineType).Sub(-1 * floatCount)
+	defer m.WithLabelValues(metrics.InstanceStatusCreating, rule.Instance.MachineType).Sub(floatCount)
 
 	var wg sync.WaitGroup
 	c := count
@@ -44,101 +58,99 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 	return nil
 }
 
-func (s *AutoScaler) ScaleDown(rule types.Rule, count uint) error {
+func (s *AutoScaler) ScaleDown(rule types.Rule, instanceName string) error {
 	s.logger.Info("scaling down")
 
-	services, _, err := s.sd.GetServices("transcoder", "", true, nil)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return err
-	}
-
-	c := count
-	nodesForRemove := []string{}
-
-	for _, service := range services {
-		nodesForRemove = append(nodesForRemove, service.Node.Node)
-
-		c--
-		if c == 0 {
-			break
-		}
-	}
-
-	for _, nodeName := range nodesForRemove {
-		go s.removeInstance(rule, nodeName)
-	}
+	go s.removeInstance(rule, instanceName)
 
 	return nil
 }
 
 func (s *AutoScaler) createInstance(rule types.Rule) error {
-	s.logger.Info("getting instance template")
-
-	template, err := s.compute.InstanceTemplates.Get(rule.Project, rule.Template).Do()
-	if err != nil {
-		s.logger.WithFields(logrus.Fields{
-			"project":  rule.Project,
-			"template": rule.Template,
-		}).Errorf("failed to get instance template: %s", err.Error())
-		return err
+	disks := []*computev1.AttachedDisk{
+		&computev1.AttachedDisk{
+			AutoDelete: true,
+			Boot:       true,
+			InitializeParams: &computev1.AttachedDiskInitializeParams{
+				SourceImage: rule.Instance.SourceImage,
+				DiskSizeGb:  rule.Instance.DiskSizeGb,
+			},
+		},
 	}
 
-	mt := template.Properties.MachineType
-	if rule.MachineType != "" {
-		mt = rule.MachineType
+	networkInterfaces := []*computev1.NetworkInterface{
+		&computev1.NetworkInterface{
+			Subnetwork: fmt.Sprintf(
+				"projects/%s/regions/%s/subnetworks/%s",
+				rule.Instance.Project,
+				rule.Instance.Region,
+				rule.Instance.Subnetwork,
+			),
+			AccessConfigs: []*computev1.AccessConfig{
+				&computev1.AccessConfig{
+					NetworkTier: "STANDARD",
+				},
+			},
+		},
 	}
 
-	machineTypeURL := fmt.Sprintf("zones/%s/machineTypes/%s", rule.Zone, mt)
-
-	var disks []*compute.AttachedDisk
-
-	for _, disk := range template.Properties.Disks {
-		disk.InitializeParams.DiskType = fmt.Sprintf(
-			"projects/%s/zones/%s/diskTypes/%s",
-			rule.Project,
-			rule.Zone,
-			disk.InitializeParams.DiskType,
-		)
-
-		disks = append(disks, disk)
+	serviceAccounts := []*computev1.ServiceAccount{
+		&computev1.ServiceAccount{
+			Scopes: []string{
+				"https://www.googleapis.com/auth/monitoring",
+				"https://www.googleapis.com/auth/devstorage.full_control",
+				"https://www.googleapis.com/auth/compute",
+			},
+		},
 	}
 
-	instance := &compute.Instance{
-		Name:              fmt.Sprintf("%s-%s", template.Name, randString(12)),
-		Description:       template.Description,
-		MachineType:       machineTypeURL,
+	instanceName := fmt.Sprintf("transcoder-%s", randString(12))
+	containerDecl := fmt.Sprintf(containerDeclTpl, instanceName, rule.Instance.DockerImage)
+	instance := &computev1.Instance{
+		Name:              instanceName,
+		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", rule.Instance.Zone, rule.Instance.MachineType),
 		Disks:             disks,
-		NetworkInterfaces: template.Properties.NetworkInterfaces,
-		ServiceAccounts:   template.Properties.ServiceAccounts,
-		Zone:              rule.Zone,
-		Metadata:          template.Properties.Metadata,
+		NetworkInterfaces: networkInterfaces,
+		ServiceAccounts:   serviceAccounts,
+		Zone:              rule.Instance.Zone,
+		Metadata: &computev1.Metadata{
+			Items: []*computev1.MetadataItems{
+				&computev1.MetadataItems{
+					Key:   "gce-container-declaration",
+					Value: pointer.ToString(containerDecl),
+				},
+			},
+		},
 	}
 
-	ilogger := s.logger.WithField("instance", instance.Name)
+	logger := s.logger.WithField("instance", instance.Name)
 
-	_, err = s.compute.Instances.Insert(rule.Project, rule.Zone, instance).Do()
+	_, err := s.compute.Instances.Insert(rule.Instance.Project, rule.Instance.Zone, instance).Do()
 	if err != nil {
-		ilogger.Error(err)
+		logger.Error(err)
 		return err
 	}
 
-	ilogger.Info("instance creating")
+	logger.Info("creating instance")
 
 	for {
-		newInstance, err := s.compute.Instances.Get(rule.Project, rule.Zone, instance.Name).Do()
+		newInstance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, instance.Name).Do()
 		if err != nil {
-			ilogger.WithFields(logrus.Fields{
-				"project": rule.Project,
-				"zone":    rule.Zone,
+			logger.WithFields(logrus.Fields{
+				"project": rule.Instance.Project,
+				"zone":    rule.Instance.Zone,
 			}).Errorf("failed to get instance: %s", err.Error())
 			return err
 		}
 
-		ilogger.WithFields(logrus.Fields{
+		logger.WithFields(logrus.Fields{
 			"name":   newInstance.Name,
 			"status": newInstance.Status,
 		}).Info("current status")
+
+		if newInstance.Status == "RUNNING" {
+			break
+		}
 
 		time.Sleep(time.Second * 5)
 	}
@@ -147,11 +159,11 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 }
 
 func (s *AutoScaler) removeInstance(rule types.Rule, name string) error {
-	ilogger := s.logger.WithField("instance", name)
+	logger := s.logger.WithField("instance", name)
 
-	instance, err := s.compute.Instances.Get(rule.Project, rule.Zone, name).Do()
+	instance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, name).Do()
 	if err != nil {
-		ilogger.Error(err.Error())
+		logger.Error(err.Error())
 		return err
 	}
 
@@ -159,29 +171,31 @@ func (s *AutoScaler) removeInstance(rule types.Rule, name string) error {
 	m.WithLabelValues(metrics.InstanceStatusRemoving, instance.MachineType).Inc()
 	defer m.WithLabelValues(metrics.InstanceStatusRemoving, instance.MachineType).Dec()
 
-	_, err = s.compute.Instances.Delete(rule.Project, rule.Zone, instance.Name).Do()
+	_, err = s.compute.Instances.Delete(rule.Instance.Project, rule.Instance.Zone, instance.Name).Do()
 	if err != nil {
-		ilogger.Error(err.Error())
+		logger.Error(err.Error())
 		return err
 	}
 
+	logger.Info("removing instance")
+
 	c := 0
 	for {
-		instance, err := s.compute.Instances.Get(rule.Project, rule.Zone, name).Do()
+		instance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, name).Do()
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "googleapi: Error 404:") {
-				ilogger.Info("instance has been removed")
+				logger.Info("instance has been removed")
 				break
 			} else {
-				ilogger.Error(err.Error())
+				logger.Error(err.Error())
 				return err
 			}
 		}
 
-		ilogger.WithField("status", instance.Status).Info("current status")
+		logger.WithField("status", instance.Status).Info("current status")
 
 		if instance.Status == "TERMINATED" {
-			ilogger.Info("instance has been terminated")
+			logger.Info("instance has been terminated")
 			break
 		}
 

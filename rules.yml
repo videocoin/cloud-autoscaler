@@ -1,11 +1,21 @@
 rules:
-  - alertname: NeedMoreTranscoders
-    scale: up
+
+- alertname: NeedMoreTranscoders
+  scale: up
+  instance:
     project: videocoin-network
+    region: us-central1
     zone: us-central1-a
-    template: dev-transcoder
-  - alertname: NeedLessTranscoders
-    scale: down
+    machineType: "n1-standard-2"
+    subnetwork: dev
+    diskSizeGb: 10
+    sourceImage: "projects/cos-cloud/global/images/cos-stable-78-12499-89-0"
+    dockerImage: gcr.io/videocoin-network/transcoder:v0.1.5-develop-da5bd04
+
+- alertname: NeedLessTranscoders
+  scale: down
+  instance:
     project: videocoin-network
+    region: us-central1
     zone: us-central1-a
-    template: dev-transcoder
+

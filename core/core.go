@@ -5,7 +5,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/cloud-autoscaler/metrics"
-	"github.com/videocoin/cloud-autoscaler/pkg/sd"
 	"github.com/videocoin/cloud-autoscaler/types"
 	"golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
@@ -13,7 +12,6 @@ import (
 
 type AutoScaler struct {
 	logger  *logrus.Entry
-	sd      *sd.Client
 	compute *compute.Service
 	Metrics *metrics.Metrics
 	Rules   types.Rules
@@ -21,7 +19,6 @@ type AutoScaler struct {
 
 func NewAutoScaler(
 	logger *logrus.Entry,
-	sd *sd.Client,
 	metrics *metrics.Metrics,
 	rules types.Rules,
 ) (*AutoScaler, error) {
@@ -37,7 +34,6 @@ func NewAutoScaler(
 
 	return &AutoScaler{
 		logger:  logger,
-		sd:      sd,
 		compute: computeSvc,
 		Metrics: metrics,
 		Rules:   rules,

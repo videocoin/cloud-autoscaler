@@ -2,11 +2,18 @@ configRules:
   rules:
   - alertname: NeedMoreTranscoders
     scale: up
-    project: videocoin-network
-    zone: us-central1-a
-    template: snb-transcoder
+    instance:
+      project: videocoin-network
+      region: us-central1
+      zone: us-central1-a
+      machineType: "n1-standard-2"
+      subnetwork: snb
+      diskSizeGb: 10
+      sourceImage: "projects/cos-cloud/global/images/cos-stable-78-12499-89-0"
+      dockerImage: gcr.io/videocoin-network/transcoder:v0.1.5-develop-da5bd04
   - alertname: NeedLessTranscoders
     scale: down
-    project: videocoin-network
-    zone: us-central1-a
-    template: snb-transcoder
+    instance:
+      project: videocoin-network
+      region: us-central1
+      zone: us-central1-a
