@@ -45,19 +45,16 @@ prometheus:
               alertname: NeedMoreTranscoders|NeedLessTranscoders
   serverFiles:
     alerts: |-
-      job:transcoder_needs = clamp_max(sum(dispatcher_tasks_total{status="PENDING"}) WITHOUT (instance, job, status) - sum(autoscaler_instances{status="creating"}) WITHOUT (instance, job, status), 3) > 0
-      job:transcoder_idle = avg_over_time(miners_internal_miner_status{status="IDLE"}[30s]) == 1
-
       ALERT NeedMoreTranscoders
-        IF job:transcoder_needs > 0
+        IF clamp_max(sum(dispatcher_tasks_total{status="PENDING"}) WITHOUT (instance, job, status) - sum(autoscaler_instances{status="creating"}) WITHOUT (instance, job, status), 3) > 0
         ANNOTATIONS {
             summary = "Need to create {{ $value }} transcoders",
             count = "{{ $value }}"
         }
 
       ALERT NeedLessTranscoders
-        IF job:transcoder_idle > 0
-        FOR 120s
+        IF avg_over_time(miners_internal_miner_status{status="IDLE"}[30s]) == 1
+        FOR 60s
         ANNOTATIONS {
             summary = "Need to delete {{ $value }} transcoders",
             count = "{{ $value }}"
