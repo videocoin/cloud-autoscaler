@@ -82,8 +82,8 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		&computev1.NetworkInterface{
 			Subnetwork: fmt.Sprintf(
 				"projects/%s/regions/%s/subnetworks/%s",
-				rule.Instance.Project,
-				rule.Instance.Region,
+				s.GCECfg.Project,
+				s.GCECfg.Region,
 				rule.Instance.Subnetwork,
 			),
 			AccessConfigs: []*computev1.AccessConfig{
@@ -108,11 +108,11 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	containerDecl := fmt.Sprintf(containerDeclTpl, instanceName, rule.Instance.DockerImage)
 	instance := &computev1.Instance{
 		Name:              instanceName,
-		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", rule.Instance.Zone, rule.Instance.MachineType),
+		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", s.GCECfg.Zone, rule.Instance.MachineType),
 		Disks:             disks,
 		NetworkInterfaces: networkInterfaces,
 		ServiceAccounts:   serviceAccounts,
-		Zone:              rule.Instance.Zone,
+		Zone:              s.GCECfg.Zone,
 		Metadata: &computev1.Metadata{
 			Items: []*computev1.MetadataItems{
 				&computev1.MetadataItems{
@@ -125,7 +125,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 
 	logger := s.logger.WithField("instance", instance.Name)
 
-	_, err := s.compute.Instances.Insert(rule.Instance.Project, rule.Instance.Zone, instance).Do()
+	_, err := s.compute.Instances.Insert(s.GCECfg.Project, s.GCECfg.Zone, instance).Do()
 	if err != nil {
 		logger.Error(err)
 		return err
@@ -134,11 +134,11 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	logger.Info("creating instance")
 
 	for {
-		newInstance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, instance.Name).Do()
+		newInstance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, instance.Name).Do()
 		if err != nil {
 			logger.WithFields(logrus.Fields{
-				"project": rule.Instance.Project,
-				"zone":    rule.Instance.Zone,
+				"project": s.GCECfg.Project,
+				"zone":    s.GCECfg.Zone,
 			}).Errorf("failed to get instance: %s", err.Error())
 			return err
 		}
@@ -162,7 +162,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 func (s *AutoScaler) removeInstance(rule types.Rule, name string) error {
 	logger := s.logger.WithField("instance", name)
 
-	instance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, name).Do()
+	instance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, name).Do()
 	if err != nil {
 		logger.Error(err.Error())
 		return err
@@ -172,7 +172,7 @@ func (s *AutoScaler) removeInstance(rule types.Rule, name string) error {
 	m.WithLabelValues(metrics.InstanceStatusRemoving, instance.MachineType).Inc()
 	defer m.WithLabelValues(metrics.InstanceStatusRemoving, instance.MachineType).Dec()
 
-	_, err = s.compute.Instances.Delete(rule.Instance.Project, rule.Instance.Zone, instance.Name).Do()
+	_, err = s.compute.Instances.Delete(s.GCECfg.Project, s.GCECfg.Zone, instance.Name).Do()
 	if err != nil {
 		logger.Error(err.Error())
 		return err
@@ -182,7 +182,7 @@ func (s *AutoScaler) removeInstance(rule types.Rule, name string) error {
 
 	c := 0
 	for {
-		instance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, name).Do()
+		instance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, name).Do()
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "googleapi: Error 404:") {
 				logger.Info("instance has been removed")

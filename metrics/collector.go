@@ -22,12 +22,14 @@ var (
 type Metrics struct {
 	Instances *prometheus.GaugeVec
 
-	rules types.Rules
+	rules  types.Rules
+	gceCfg *types.GCEConfig
 }
 
-func NewMetrics(namespace string, rules types.Rules) *Metrics {
+func NewMetrics(namespace string, rules types.Rules, gceCfg *types.GCEConfig) *Metrics {
 	return &Metrics{
-		rules: rules,
+		gceCfg: gceCfg,
+		rules:  rules,
 		Instances: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
@@ -43,16 +45,6 @@ func (m *Metrics) RegisterAll() error {
 	prometheus.MustRegister(m.Instances)
 
 	if metadata.OnGCE() {
-		project, err := metadata.ProjectID()
-		if err != nil {
-			return err
-		}
-
-		zone, err := metadata.Zone()
-		if err != nil {
-			return err
-		}
-
 		ctx := context.Background()
 		gccli, err := google.DefaultClient(ctx, computev1.CloudPlatformScope)
 		if err != nil {
@@ -64,7 +56,7 @@ func (m *Metrics) RegisterAll() error {
 		}
 
 		machineTypes := []string{}
-		req := computeService.MachineTypes.List(project, zone)
+		req := computeService.MachineTypes.List(m.gceCfg.Project, m.gceCfg.Zone)
 		if err := req.Pages(ctx, func(page *computev1.MachineTypeList) error {
 			for _, machineType := range page.Items {
 				machineTypes = append(machineTypes, machineType.Name)

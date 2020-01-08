@@ -59,7 +59,6 @@ function deploy() {
         --install \
         --set image.tag="${VERSION}" \
         --set secrets.sentryDsn="${SENTRY_DSN}" \
-        -f ./deploy/helm/values.${ENV}.yaml \
         --wait ${CHART_NAME} ${CHART_DIR}
 }
 

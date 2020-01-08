@@ -15,12 +15,14 @@ type AutoScaler struct {
 	compute *compute.Service
 	Metrics *metrics.Metrics
 	Rules   types.Rules
+	GCECfg  *types.GCEConfig
 }
 
 func NewAutoScaler(
 	logger *logrus.Entry,
 	metrics *metrics.Metrics,
 	rules types.Rules,
+	gceCfg *types.GCEConfig,
 ) (*AutoScaler, error) {
 	computeCli, err := google.DefaultClient(context.TODO(), compute.ComputeScope)
 	if err != nil {
@@ -37,5 +39,6 @@ func NewAutoScaler(
 		compute: computeSvc,
 		Metrics: metrics,
 		Rules:   rules,
+		GCECfg:  gceCfg,
 	}, nil
 }
