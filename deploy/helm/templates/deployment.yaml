@@ -48,6 +48,8 @@ spec:
               value: config-consul:8500
             - name: LOGLEVEL
               value: debug
+            - name: CLUSTER_ENV
+              value: {{ .Values.config.clusterEnv }}
             - name: ADDR
               value: $(POD_IP):{{ .Values.service.internalPort }}
             - name: SENTRY_DSN

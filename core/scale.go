@@ -21,6 +21,10 @@ spec:
     env:
       - name: INTERNAL
         value: '1'
+      - name: DISPATCHER_ADDR
+        value: 'd.%s.videocoin.network:5008'
+      - name: SYNCER_URL
+        value: 'https://%s.videocoin.network/api/v1/sync'
     stdin: false
     tty: false
   restartPolicy: Always
@@ -104,8 +108,8 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		},
 	}
 
-	instanceName := fmt.Sprintf("transcoder-%s", randString(12))
-	containerDecl := fmt.Sprintf(containerDeclTpl, instanceName, rule.Instance.DockerImage)
+	instanceName := fmt.Sprintf("transcoder-%s-%s", s.GCECfg.Env, randString(12))
+	containerDecl := fmt.Sprintf(containerDeclTpl, instanceName, rule.Instance.DockerImage, s.GCECfg.Env, s.GCECfg.Env)
 	instance := &computev1.Instance{
 		Name:              instanceName,
 		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", s.GCECfg.Zone, rule.Instance.MachineType),

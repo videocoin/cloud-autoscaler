@@ -59,6 +59,7 @@ function deploy() {
         --install \
         --set image.tag="${VERSION}" \
         --set secrets.sentryDsn="${SENTRY_DSN}" \
+        --set config.clusterEnv="${ENV}" \
         --wait ${CHART_NAME} ${CHART_DIR}
 }
 
