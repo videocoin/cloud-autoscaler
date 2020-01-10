@@ -157,8 +157,6 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 			continue
 		}
 
-		logger.Infof("%+v\n", newInstance.Metadata.Items[0])
-
 		isRunning := false
 		for _, item := range newInstance.Metadata.Items {
 			if item.Key == "vc-running" {
