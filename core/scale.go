@@ -152,12 +152,29 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 			"status": newInstance.Status,
 		}).Info("current status")
 
-		if newInstance.Status == "RUNNING" {
-			time.Sleep(time.Second * 60)
-			break
+		if newInstance.Status != "RUNNING" {
+			time.Sleep(time.Second * 5)
+			continue
 		}
 
-		time.Sleep(time.Second * 5)
+		logger.Infof("%+v\n", newInstance.Metadata.Items[0])
+
+		isRunning := false
+		for _, item := range newInstance.Metadata.Items {
+			if item.Key == "vc-running" {
+				isRunning = true
+				break
+			}
+		}
+
+		if !isRunning {
+			time.Sleep(time.Second * 5)
+			continue
+		}
+
+		time.Sleep(time.Second * 10)
+
+		break
 	}
 
 	return nil
