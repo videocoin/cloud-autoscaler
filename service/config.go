@@ -12,7 +12,6 @@ type Config struct {
 	Rules   types.Rules   `envconfig:"-"`
 
 	Addr       string `default:"0.0.0.0:5030" envconfig:"ADDR"`
-	ConsulAddr string `default:"127.0.0.1:8500" envconfig:"CONSUL_ADDR"`
 	RulesPath  string `default:"rules.yml"`
 	ClusterEnv string `default:"dev" envconfig:"CLUSTER_ENV"`
 }
