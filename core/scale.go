@@ -21,6 +21,8 @@ spec:
     env:
       - name: INTERNAL
         value: '1'
+      - name: LOGLEVEL
+        value: 'debug'
       - name: DISPATCHER_ADDR
         value: 'd.%s.videocoin.network:5008'
       - name: SYNCER_URL
