@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/prometheus/alertmanager/notify/webhook"
@@ -49,7 +50,9 @@ func (s *Server) prometheusWebhook(c echo.Context) error {
 			}
 
 			if rule.IsScaleDown() {
-				go s.AutoScaler.ScaleDown(*rule, alert.Labels["hostname"])
+				if strings.HasPrefix(alert.Labels["hostname"], "transcoder-") {
+					go s.AutoScaler.ScaleDown(*rule, alert.Labels["hostname"])
+				}
 			}
 		}
 	}
