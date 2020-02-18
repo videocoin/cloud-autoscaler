@@ -90,7 +90,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 				"projects/%s/regions/%s/subnetworks/%s",
 				s.GCECfg.Project,
 				s.GCECfg.Region,
-				rule.Instance.Subnetwork,
+				s.GCECfg.Env,
 			),
 			AccessConfigs: []*computev1.AccessConfig{
 				&computev1.AccessConfig{
@@ -111,7 +111,8 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	}
 
 	instanceName := fmt.Sprintf("transcoder-%s-%s", s.GCECfg.Env, randString(12))
-	containerDecl := fmt.Sprintf(containerDeclTpl, instanceName, rule.Instance.DockerImage, s.GCECfg.Env, s.GCECfg.Env)
+	dockerImage := fmt.Sprintf("gcr.io/%s/transcoder:latest", s.GCECfg.Project)
+	containerDecl := fmt.Sprintf(containerDeclTpl, instanceName, dockerImage, s.GCECfg.Env, s.GCECfg.Env)
 	instance := &computev1.Instance{
 		Name:              instanceName,
 		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", s.GCECfg.Zone, rule.Instance.MachineType),
