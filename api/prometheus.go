@@ -46,12 +46,12 @@ func (s *Server) prometheusWebhook(c echo.Context) error {
 		count, _ := strconv.ParseUint(alert.Annotations["count"], 0, 32)
 		if count > 0 {
 			if rule.IsScaleUp() {
-				go s.AutoScaler.ScaleUp(*rule, uint(count))
+				go s.logger.Error(s.AutoScaler.ScaleUp(*rule, uint(count)))
 			}
 
 			if rule.IsScaleDown() {
 				if strings.HasPrefix(alert.Labels["hostname"], "transcoder-") {
-					go s.AutoScaler.ScaleDown(*rule, alert.Labels["hostname"])
+					go s.logger.Error(s.AutoScaler.ScaleDown(*rule, alert.Labels["hostname"]))
 				}
 			}
 		}

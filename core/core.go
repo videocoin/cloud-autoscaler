@@ -29,7 +29,7 @@ func NewAutoScaler(
 		return nil, err
 	}
 
-	computeSvc, err := compute.New(computeCli)
+	computeSvc, err := compute.New(computeCli)  //nolint
 	if err != nil {
 		return nil, err
 	}

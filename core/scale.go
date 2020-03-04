@@ -46,13 +46,13 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 
 	for {
 		wg.Add(1)
-		go func() error {
+		go func() {
 			defer wg.Done()
-			return s.createInstance(rule)
+			s.logger.Error(s.createInstance(rule))
 		}()
 
 		c--
-		if c <= 0 {
+		if c == 0 {
 			break
 		}
 	}
@@ -67,14 +67,14 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 func (s *AutoScaler) ScaleDown(rule types.Rule, instanceName string) error {
 	s.logger.Info("scaling down")
 
-	go s.removeInstance(rule, instanceName)
+	go s.logger.Error(s.removeInstance(rule, instanceName))
 
 	return nil
 }
 
 func (s *AutoScaler) createInstance(rule types.Rule) error {
 	disks := []*computev1.AttachedDisk{
-		&computev1.AttachedDisk{
+		{
 			AutoDelete: true,
 			Boot:       true,
 			InitializeParams: &computev1.AttachedDiskInitializeParams{
@@ -85,7 +85,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	}
 
 	networkInterfaces := []*computev1.NetworkInterface{
-		&computev1.NetworkInterface{
+		{
 			Subnetwork: fmt.Sprintf(
 				"projects/%s/regions/%s/subnetworks/%s",
 				s.GCECfg.Project,
@@ -93,7 +93,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 				s.GCECfg.Env,
 			),
 			AccessConfigs: []*computev1.AccessConfig{
-				&computev1.AccessConfig{
+				{
 					NetworkTier: "STANDARD",
 				},
 			},
@@ -101,7 +101,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	}
 
 	serviceAccounts := []*computev1.ServiceAccount{
-		&computev1.ServiceAccount{
+		{
 			Scopes: []string{
 				"https://www.googleapis.com/auth/monitoring",
 				"https://www.googleapis.com/auth/devstorage.full_control",
@@ -122,7 +122,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		Zone:              s.GCECfg.Zone,
 		Metadata: &computev1.Metadata{
 			Items: []*computev1.MetadataItems{
-				&computev1.MetadataItems{
+				{
 					Key:   "gce-container-declaration",
 					Value: pointer.ToString(containerDecl),
 				},
@@ -181,7 +181,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	return nil
 }
 
-func (s *AutoScaler) removeInstance(rule types.Rule, name string) error {
+func (s *AutoScaler) removeInstance(_ types.Rule, name string) error {
 	logger := s.logger.WithField("instance", name)
 
 	instance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, name).Do()

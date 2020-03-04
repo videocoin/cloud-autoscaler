@@ -2,7 +2,6 @@ package service
 
 import (
 	"cloud.google.com/go/compute/metadata"
-	consulapi "github.com/hashicorp/consul/api"
 	"github.com/videocoin/cloud-autoscaler/api"
 	"github.com/videocoin/cloud-autoscaler/core"
 	"github.com/videocoin/cloud-autoscaler/metrics"
@@ -12,7 +11,6 @@ import (
 type Service struct {
 	cfg       *Config
 	apiServer *api.Server
-	info      *consulapi.AgentService
 }
 
 func NewService(cfg *Config) (*Service, error) {
@@ -70,7 +68,7 @@ func (s *Service) Init() error {
 
 func (s *Service) Start() error {
 	s.cfg.Logger.Info("starting api server")
-	go s.apiServer.Start()
+	go s.apiServer.Start()  //nolint
 
 	return nil
 }
