@@ -48,7 +48,13 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			s.logger.Error(s.createInstance(rule))
+			go func() {
+				err := s.createInstance(rule)
+				if err != nil {
+					s.logger.Error(err)
+				}
+			}()
+
 		}()
 
 		c--
@@ -67,8 +73,12 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 func (s *AutoScaler) ScaleDown(rule types.Rule, instanceName string) error {
 	s.logger.Info("scaling down")
 
-	go s.logger.Error(s.removeInstance(rule, instanceName))
-
+	go func() {
+		err := s.removeInstance(rule, instanceName)
+		if err != nil {
+			s.logger.Error(err)
+		}
+	}()
 	return nil
 }
 

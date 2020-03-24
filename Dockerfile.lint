@@ -4,4 +4,4 @@ WORKDIR /go/src/github.com/videocoin/cloud-autoscaler
 
 COPY . .
 
-RUN golangci-lint run -v
+RUN golangci-lint run -v --timeout 120s
