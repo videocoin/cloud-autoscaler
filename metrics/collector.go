@@ -50,7 +50,7 @@ func (m *Metrics) RegisterAll() error {
 		if err != nil {
 			return err
 		}
-		computeService, err := computev1.New(gccli)  //nolint
+		computeService, err := computev1.New(gccli) //nolint
 		if err != nil {
 			return err
 		}

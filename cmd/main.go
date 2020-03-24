@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	stdlog "log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,8 +23,10 @@ var (
 )
 
 func main() {
-	logger.Init(ServiceName, Version)  //nolint
-
+	err := logger.Init(ServiceName, Version)
+	if err != nil {
+		stdlog.Fatalf("Failed to init logger: %s", err)
+	}
 	log := logrus.NewEntry(logrus.New())
 	log = logrus.WithFields(logrus.Fields{
 		"service": ServiceName,
@@ -80,7 +83,7 @@ func main() {
 	}()
 
 	log.Info("starting")
-	go log.Error(svc.Start())
+	go svc.Start()
 
 	<-exit
 

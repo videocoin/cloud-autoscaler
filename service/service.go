@@ -66,11 +66,15 @@ func (s *Service) Init() error {
 	return nil
 }
 
-func (s *Service) Start() error {
+func (s *Service) Start() {
 	s.cfg.Logger.Info("starting api server")
-	go s.apiServer.Start()  //nolint
 
-	return nil
+	go func() {
+		err := s.apiServer.Start()
+		if err != nil {
+			s.cfg.Logger.Error(err)
+		}
+	}()
 }
 
 func (s *Service) Stop() error {
