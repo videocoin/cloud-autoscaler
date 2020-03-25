@@ -33,9 +33,6 @@ func (s *Server) Start() error {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
-	// e.Logger = logrusext.MWLogger{s.logger}
-	// e.Use(logrusext.Hook())
-	// e.Use(middleware.Recover())
 
 	e.GET("/healthz", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{
@@ -45,7 +42,6 @@ func (s *Server) Start() error {
 	})
 
 	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
-
 	e.POST("/prometheus/webhook", s.prometheusWebhook)
 
 	return e.Start(s.cfg.Addr)
