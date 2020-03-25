@@ -6,13 +6,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/cloud-autoscaler/metrics"
 	"github.com/videocoin/cloud-autoscaler/types"
-	"golang.org/x/oauth2/google"
-	compute "google.golang.org/api/compute/v1"
+	computev1 "google.golang.org/api/compute/v1"
 )
 
 type AutoScaler struct {
 	logger  *logrus.Entry
-	compute *compute.Service
+	compute *computev1.Service
 	Metrics *metrics.Metrics
 	Rules   types.Rules
 	GCECfg  *types.GCEConfig
@@ -24,12 +23,8 @@ func NewAutoScaler(
 	rules types.Rules,
 	gceCfg *types.GCEConfig,
 ) (*AutoScaler, error) {
-	computeCli, err := google.DefaultClient(context.TODO(), compute.ComputeScope)
-	if err != nil {
-		return nil, err
-	}
-
-	computeSvc, err := compute.New(computeCli) //nolint
+	ctx := context.Background()
+	computeSvc, err := computev1.NewService(ctx)
 	if err != nil {
 		return nil, err
 	}

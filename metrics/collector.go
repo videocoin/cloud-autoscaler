@@ -6,7 +6,6 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/videocoin/cloud-autoscaler/types"
-	"golang.org/x/oauth2/google"
 	computev1 "google.golang.org/api/compute/v1"
 )
 
@@ -46,11 +45,7 @@ func (m *Metrics) RegisterAll() error {
 
 	if metadata.OnGCE() {
 		ctx := context.Background()
-		gccli, err := google.DefaultClient(ctx, computev1.CloudPlatformScope)
-		if err != nil {
-			return err
-		}
-		computeService, err := computev1.New(gccli) //nolint
+		computeService, err := computev1.NewService(ctx)
 		if err != nil {
 			return err
 		}

@@ -62,18 +62,10 @@ func NewService(cfg *Config) (*Service, error) {
 	return s, nil
 }
 
-func (s *Service) Init() error {
-	return nil
-}
-
-func (s *Service) Start() {
-	s.cfg.Logger.Info("starting api server")
-
+func (s *Service) Start(errCh chan error) {
 	go func() {
-		err := s.apiServer.Start()
-		if err != nil {
-			s.cfg.Logger.Error(err)
-		}
+		s.cfg.Logger.Info("starting api server")
+		errCh <- s.apiServer.Start()
 	}()
 }
 

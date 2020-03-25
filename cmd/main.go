@@ -2,17 +2,15 @@ package main
 
 import (
 	"io/ioutil"
-	stdlog "log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/ghodss/yaml"
-	"github.com/videocoin/cloud-autoscaler/types"
-
 	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/cloud-autoscaler/service"
+	"github.com/videocoin/cloud-autoscaler/types"
 	"github.com/videocoin/cloud-pkg/logger"
 	"github.com/videocoin/cloud-pkg/tracer"
 )
@@ -23,10 +21,8 @@ var (
 )
 
 func main() {
-	err := logger.Init(ServiceName, Version)
-	if err != nil {
-		stdlog.Fatalf("Failed to init logger: %s", err)
-	}
+	logger.Init(ServiceName, Version)
+
 	log := logrus.NewEntry(logrus.New())
 	log = logrus.WithFields(logrus.Fields{
 		"service": ServiceName,
@@ -62,7 +58,6 @@ func main() {
 	}
 
 	cfg.Rules = asRules.Rules
-
 	cfg.Logger = log
 
 	svc, err := service.NewService(cfg)
@@ -72,6 +67,7 @@ func main() {
 
 	signals := make(chan os.Signal, 1)
 	exit := make(chan bool, 1)
+	errCh := make(chan error, 1)
 
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
@@ -83,9 +79,17 @@ func main() {
 	}()
 
 	log.Info("starting")
-	go svc.Start()
+	go svc.Start(errCh)
 
-	<-exit
+	select {
+	case <-exit:
+		break
+	case err := <-errCh:
+		if err != nil {
+			log.Error(err)
+		}
+		break
+	}
 
 	log.Info("stopping")
 	err = svc.Stop()

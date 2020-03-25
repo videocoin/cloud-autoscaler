@@ -6,12 +6,7 @@ require (
 	cloud.google.com/go v0.38.0
 	github.com/AlekSi/pointer v1.1.0
 	github.com/certifi/gocertifi v0.0.0-20191021191039-0944d244cd40 // indirect
-	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/ghodss/yaml v1.0.0
-	github.com/hashicorp/consul/api v1.3.0
-	github.com/huin/goupnp v1.0.0 // indirect
-	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
-	github.com/karalabe/hid v1.0.0 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.0 // indirect
@@ -24,9 +19,11 @@ require (
 	github.com/videocoin/cloud-api v0.2.15 // indirect
 	github.com/videocoin/cloud-dispatcher v0.1.3 // indirect
 	github.com/videocoin/cloud-pkg v0.0.6
-	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
+	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6 // indirect
 	google.golang.org/api v0.15.0
 	gopkg.in/redis.v5 v5.2.9 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )
+
+replace github.com/videocoin/cloud-pkg => ../cloud-pkg
