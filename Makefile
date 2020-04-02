@@ -16,7 +16,7 @@ version:
 
 build:
 	GOOS=${GOOS} GOARCH=${GOARCH} \
-		go build \
+		go build -mod vendor \
 			-ldflags="-w -s -X main.Version=${VERSION}" \
 			-o bin/${NAME} \
 			./cmd/main.go
