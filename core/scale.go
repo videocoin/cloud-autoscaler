@@ -48,12 +48,10 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			go func() {
-				err := s.createInstance(rule)
-				if err != nil {
-					s.logger.Error(err)
-				}
-			}()
+			err := s.createInstance(rule)
+			if err != nil {
+				s.logger.Error(err)
+			}
 
 		}()
 
