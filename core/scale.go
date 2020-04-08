@@ -136,6 +136,10 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 				},
 			},
 		},
+		Scheduling: &computev1.Scheduling{
+			AutomaticRestart: pointer.ToBool(false),
+			Preemptible:      true,
+		},
 	}
 
 	logger := s.logger.WithField("instance", instance.Name)
