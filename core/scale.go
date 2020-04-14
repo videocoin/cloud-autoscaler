@@ -38,7 +38,7 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 	floatCount := float64(count)
 
 	m := s.Metrics.Instances
-	m.WithLabelValues(metrics.InstanceStatusCreating, rule.Instance.MachineType).Sub(-1 * floatCount)
+	m.WithLabelValues(metrics.InstanceStatusCreating, rule.Instance.MachineType).Add(floatCount)
 	defer m.WithLabelValues(metrics.InstanceStatusCreating, rule.Instance.MachineType).Sub(floatCount)
 
 	var wg sync.WaitGroup
