@@ -146,7 +146,6 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 
 	_, err := s.compute.Instances.Insert(s.GCECfg.Project, s.GCECfg.Zone, instance).Do()
 	if err != nil {
-		logger.Error(err)
 		return err
 	}
 
@@ -155,10 +154,6 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	for {
 		newInstance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, instance.Name).Do()
 		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"project": s.GCECfg.Project,
-				"zone":    s.GCECfg.Zone,
-			}).Errorf("failed to get instance: %s", err.Error())
 			return err
 		}
 
@@ -172,18 +167,18 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 			continue
 		}
 
-		isRunning := false
-		for _, item := range newInstance.Metadata.Items {
-			if item.Key == "vc-running" {
-				isRunning = true
-				break
-			}
-		}
+		// isRunning := false
+		// for _, item := range newInstance.Metadata.Items {
+		// 	if item.Key == "vc-running" {
+		// 		isRunning = true
+		// 		break
+		// 	}
+		// }
 
-		if !isRunning {
-			time.Sleep(time.Second * 5)
-			continue
-		}
+		// if !isRunning {
+		// 	time.Sleep(time.Second * 5)
+		// 	continue
+		// }
 
 		time.Sleep(time.Second * 10)
 
@@ -198,7 +193,6 @@ func (s *AutoScaler) removeInstance(_ types.Rule, name string) error {
 
 	instance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, name).Do()
 	if err != nil {
-		logger.Error(err.Error())
 		return err
 	}
 
@@ -208,7 +202,6 @@ func (s *AutoScaler) removeInstance(_ types.Rule, name string) error {
 
 	_, err = s.compute.Instances.Delete(s.GCECfg.Project, s.GCECfg.Zone, instance.Name).Do()
 	if err != nil {
-		logger.Error(err.Error())
 		return err
 	}
 
@@ -222,12 +215,16 @@ func (s *AutoScaler) removeInstance(_ types.Rule, name string) error {
 				logger.Info("instance has been removed")
 				break
 			} else {
-				logger.Error(err.Error())
 				return err
 			}
 		}
 
 		logger.WithField("status", instance.Status).Info("current status")
+
+		if instance.Status == "STOPPING" {
+			logger.Info("instance has been stopping")
+			break
+		}
 
 		if instance.Status == "TERMINATED" {
 			logger.Info("instance has been terminated")
