@@ -136,10 +136,10 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 				},
 			},
 		},
-		// Scheduling: &computev1.Scheduling{
-		// 	AutomaticRestart: pointer.ToBool(false),
-		// 	Preemptible:      true,
-		// },
+		Scheduling: &computev1.Scheduling{
+			AutomaticRestart: pointer.ToBool(false),
+			Preemptible:      true,
+		},
 	}
 
 	logger := s.logger.WithField("instance", instance.Name)
@@ -180,7 +180,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		// 	continue
 		// }
 
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 20)
 
 		break
 	}

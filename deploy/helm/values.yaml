@@ -54,7 +54,7 @@ prometheus:
 
       ALERT NeedLessTranscoders
         IF avg_over_time(miners_internal_miner_status{status="IDLE"}[30s]) == 1
-        FOR 60s
+        FOR 300s
         ANNOTATIONS {
             summary = "Need to delete {{ $value }} transcoders",
             count = "{{ $value }}"
