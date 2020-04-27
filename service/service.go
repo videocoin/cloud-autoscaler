@@ -15,7 +15,8 @@ type Service struct {
 
 func NewService(cfg *Config) (*Service, error) {
 	gceConfig := &types.GCEConfig{
-		Env: cfg.ClusterEnv,
+		Env:             cfg.ClusterEnv,
+		WorkerSentryDSN: cfg.WorkerSentryDSN,
 	}
 
 	if metadata.OnGCE() {

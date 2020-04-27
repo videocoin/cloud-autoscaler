@@ -11,7 +11,8 @@ type Config struct {
 	Version string        `envconfig:"-"`
 	Rules   types.Rules   `envconfig:"-"`
 
-	Addr       string `default:"0.0.0.0:5030" envconfig:"ADDR"`
-	RulesPath  string `default:"rules.yml"`
-	ClusterEnv string `default:"dev" envconfig:"CLUSTER_ENV"`
+	Addr            string `envconfig:"ADDR" default:"0.0.0.0:5030"`
+	RulesPath       string `default:"rules.yml"`
+	ClusterEnv      string `envconfig:"CLUSTER_ENV" default:"dev"`
+	WorkerSentryDSN string `envconfig:"WORKER_SENTRY_DSN"`
 }

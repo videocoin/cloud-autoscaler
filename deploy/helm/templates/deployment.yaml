@@ -52,6 +52,8 @@ spec:
               value: {{ .Values.config.clusterEnv }}
             - name: ADDR
               value: $(POD_IP):{{ .Values.service.internalPort }}
+            - name: WORKER_SENTRY_DSN
+              value: {{ .Values.secrets.workerSentryDsn | b64dec }}
             - name: SENTRY_DSN
               value: {{ .Values.secrets.sentryDsn | b64dec }}
             # - name: AUTOSCALER_RULESPATH

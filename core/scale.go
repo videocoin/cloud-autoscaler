@@ -27,6 +27,8 @@ spec:
         value: 'd.%s.videocoin.network:5008'
       - name: SYNCER_URL
         value: 'https://%s.videocoin.network/api/v1/sync'
+      - name: WORKER_SENTRY_DSN
+        value: '%s'
     stdin: false
     tty: false
   restartPolicy: Always
@@ -120,7 +122,14 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 
 	instanceName := fmt.Sprintf("transcoder-%s-%s", s.GCECfg.Env, randString(12))
 	dockerImage := fmt.Sprintf("gcr.io/%s/transcoder:latest", s.GCECfg.Project)
-	containerDecl := fmt.Sprintf(containerDeclTpl, instanceName, dockerImage, s.GCECfg.Env, s.GCECfg.Env)
+	containerDecl := fmt.Sprintf(
+		containerDeclTpl,
+		instanceName,
+		dockerImage,
+		s.GCECfg.Env,
+		s.GCECfg.Env,
+		s.GCECfg.WorkerSentryDSN,
+	)
 	instance := &computev1.Instance{
 		Name:              instanceName,
 		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", s.GCECfg.Zone, rule.Instance.MachineType),
