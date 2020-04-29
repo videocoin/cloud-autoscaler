@@ -189,7 +189,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		// 	continue
 		// }
 
-		time.Sleep(time.Second * 20)
+		time.Sleep(time.Second * 120)
 
 		break
 	}
