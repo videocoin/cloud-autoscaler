@@ -143,6 +143,10 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 					Key:   "gce-container-declaration",
 					Value: pointer.ToString(containerDecl),
 				},
+				{
+					Key:   "shutdown-script",
+					Value: pointer.ToString("#! /bin/bash\n\ndocker container kill -s 2 $(docker ps -q)"),
+				},
 			},
 		},
 		Scheduling: &computev1.Scheduling{
