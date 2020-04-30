@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -176,26 +177,43 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		}).Info("current status")
 
 		if newInstance.Status != "RUNNING" {
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * 10)
 			continue
 		}
 
-		// isRunning := false
-		// for _, item := range newInstance.Metadata.Items {
-		// 	if item.Key == "vc-running" {
-		// 		isRunning = true
-		// 		break
-		// 	}
-		// }
+		if newInstance.NetworkInterfaces[0].NetworkIP != "" {
+			healthAddr := fmt.Sprintf(
+				"http://%s:8888/healthz",
+				newInstance.NetworkInterfaces[0].NetworkIP,
+			)
 
-		// if !isRunning {
-		// 	time.Sleep(time.Second * 5)
-		// 	continue
-		// }
+			logger.WithFields(logrus.Fields{
+				"name":        newInstance.Name,
+				"health_addr": healthAddr,
+			}).Info("getting health")
 
-		time.Sleep(time.Second * 120)
+			resp, err := http.Get(healthAddr)
+			if err != nil {
+				logger.WithFields(logrus.Fields{
+					"name":        newInstance.Name,
+					"health_addr": healthAddr,
+				}).Warnf("failed to get health: %s", err)
 
-		break
+				time.Sleep(time.Second * 10)
+				continue
+			}
+
+			if resp != nil && resp.StatusCode == 200 {
+				logger.WithFields(logrus.Fields{
+					"name":        newInstance.Name,
+					"health_addr": healthAddr,
+				}).Info("transcoder has been started")
+
+				break
+			}
+		}
+
+		time.Sleep(time.Second * 10)
 	}
 
 	return nil
