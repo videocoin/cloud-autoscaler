@@ -122,7 +122,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	}
 
 	instanceName := fmt.Sprintf("transcoder-%s-%s", s.GCECfg.Env, randString(12))
-	dockerImage := fmt.Sprintf("gcr.io/%s/transcoder:v0.2.0-develop-b97cfc8", s.GCECfg.Project)
+	dockerImage := fmt.Sprintf("gcr.io/%s/transcoder:v0.2.0-develop-b525048", s.GCECfg.Project)
 	containerDecl := fmt.Sprintf(
 		containerDeclTpl,
 		instanceName,
@@ -175,6 +175,12 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 			"name":   newInstance.Name,
 			"status": newInstance.Status,
 		}).Info("current status")
+
+		if newInstance.Status == "STOPPING" ||
+			newInstance.Status == "TERMINATED" {
+			logger.WithField("name", newInstance.Name).Info("transcoder has been terminated")
+			break
+		}
 
 		if newInstance.Status != "RUNNING" {
 			time.Sleep(time.Second * 10)
