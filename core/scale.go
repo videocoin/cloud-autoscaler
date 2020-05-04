@@ -122,7 +122,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	}
 
 	instanceName := fmt.Sprintf("transcoder-%s-%s", s.GCECfg.Env, randString(12))
-	dockerImage := fmt.Sprintf("gcr.io/%s/transcoder:v0.2.0-develop-4f25856", s.GCECfg.Project)
+	dockerImage := fmt.Sprintf("gcr.io/%s/transcoder:v0.2.0-develop-b97cfc8", s.GCECfg.Project)
 	containerDecl := fmt.Sprintf(
 		containerDeclTpl,
 		instanceName,
