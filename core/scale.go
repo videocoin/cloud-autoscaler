@@ -122,7 +122,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	}
 
 	instanceName := fmt.Sprintf("transcoder-%s-%s", s.GCECfg.Env, randString(12))
-	dockerImage := fmt.Sprintf("gcr.io/%s/transcoder:v0.2.0-develop-71c845e", s.GCECfg.Project)
+	dockerImage := fmt.Sprintf("gcr.io/%s/transcoder:v0.2.0-develop-f9f759e", s.GCECfg.Project)
 	containerDecl := fmt.Sprintf(
 		containerDeclTpl,
 		instanceName,
@@ -150,10 +150,10 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 				},
 			},
 		},
-		// Scheduling: &computev1.Scheduling{
-		// 	AutomaticRestart: pointer.ToBool(false),
-		// 	Preemptible:      true,
-		// },
+		Scheduling: &computev1.Scheduling{
+			AutomaticRestart: pointer.ToBool(false),
+			Preemptible:      true,
+		},
 	}
 
 	logger := s.logger.WithField("instance", instance.Name)
