@@ -6,4 +6,6 @@ type GCEConfig struct {
 	Zone            string
 	Env             string
 	WorkerSentryDSN string
+	UsePreemtible   bool
+	MaxCount        int
 }

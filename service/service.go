@@ -17,6 +17,8 @@ func NewService(cfg *Config) (*Service, error) {
 	gceConfig := &types.GCEConfig{
 		Env:             cfg.ClusterEnv,
 		WorkerSentryDSN: cfg.WorkerSentryDSN,
+		UsePreemtible:   cfg.UsePreemtible,
+		MaxCount:        cfg.MaxTranscodersCount,
 	}
 
 	if metadata.OnGCE() {

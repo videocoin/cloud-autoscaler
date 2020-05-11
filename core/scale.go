@@ -38,6 +38,19 @@ spec:
 func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 	s.logger.WithField("machine_type", rule.Instance.MachineType).Info("scaling up")
 
+	instances, err := s.compute.Instances.
+		List(s.GCECfg.Project, s.GCECfg.Zone).
+		Filter(fmt.Sprintf("name~transcoder-%s-* AND status=RUNNING", s.GCECfg.Env)).
+		Do()
+	if err != nil {
+		return err
+	}
+
+	if len(instances.Items) >= s.GCECfg.MaxCount {
+		s.logger.Warning("max count of transcoders is already run")
+		return nil
+	}
+
 	floatCount := float64(count)
 
 	m := s.Metrics.Instances
@@ -150,10 +163,9 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 				},
 			},
 		},
-		// Scheduling: &computev1.Scheduling{
-		// 	AutomaticRestart: pointer.ToBool(false),
-		// 	Preemptible:      true,
-		// },
+		Scheduling: &computev1.Scheduling{
+			Preemptible: s.GCECfg.UsePreemtible,
+		},
 	}
 
 	logger := s.logger.WithField("instance", instance.Name)

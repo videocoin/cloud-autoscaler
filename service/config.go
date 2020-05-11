@@ -11,8 +11,10 @@ type Config struct {
 	Version string        `envconfig:"-"`
 	Rules   types.Rules   `envconfig:"-"`
 
-	Addr            string `envconfig:"ADDR" default:"0.0.0.0:5030"`
-	RulesPath       string `default:"rules.yml"`
-	ClusterEnv      string `envconfig:"CLUSTER_ENV" default:"dev"`
-	WorkerSentryDSN string `envconfig:"WORKER_SENTRY_DSN"`
+	Addr                string `envconfig:"ADDR" default:"0.0.0.0:5030"`
+	RulesPath           string `default:"rules.yml"`
+	ClusterEnv          string `envconfig:"CLUSTER_ENV" default:"dev"`
+	WorkerSentryDSN     string `envconfig:"WORKER_SENTRY_DSN"`
+	UsePreemtible       bool   `default:"true"`
+	MaxTranscodersCount int    `default:"20"`
 }
