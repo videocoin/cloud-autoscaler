@@ -87,6 +87,7 @@ jobs:
           command: |
             source .circleci/init.sh
             timeout -t 15 bash .circleci/wait-consul.sh
+            helm repo update
             make deploy
 workflows:
   version: 2
