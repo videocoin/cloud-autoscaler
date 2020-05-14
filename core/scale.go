@@ -40,15 +40,15 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 
 	instances, err := s.compute.Instances.
 		List(s.GCECfg.Project, s.GCECfg.Zone).
-		Filter(fmt.Sprintf("name~transcoder-%s-* AND status=RUNNING", s.GCECfg.Env)).
+		Filter(fmt.Sprintf("(name=transcoder-%s-*) AND (status=RUNNING)", s.GCECfg.Env)).
 		Do()
 	if err != nil {
-		return err
-	}
-
-	if len(instances.Items) >= s.GCECfg.MaxCount {
-		s.logger.Warning("max count of transcoders is already run")
-		return nil
+		s.logger.WithError(err).Error("failed to get trascoder instances")
+	} else {
+		if len(instances.Items) >= s.GCECfg.MaxCount {
+			s.logger.Warning("max count of transcoders is already run")
+			return nil
+		}
 	}
 
 	floatCount := float64(count)
