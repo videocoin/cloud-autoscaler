@@ -8,7 +8,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/sirupsen/logrus"
 	"github.com/videocoin/cloud-autoscaler/service"
 	"github.com/videocoin/cloud-autoscaler/types"
 	"github.com/videocoin/cloud-pkg/logger"
@@ -21,13 +20,7 @@ var (
 )
 
 func main() {
-	logger.Init(ServiceName, Version)
-
-	log := logrus.NewEntry(logrus.New())
-	log = logrus.WithFields(logrus.Fields{
-		"service": ServiceName,
-		"version": Version,
-	})
+	log := logger.NewLogrusLogger(ServiceName, Version, nil)
 
 	closer, err := tracer.NewTracer(ServiceName)
 	if err != nil {
@@ -39,6 +32,7 @@ func main() {
 	cfg := &service.Config{
 		Name:    ServiceName,
 		Version: Version,
+		Logger:  log,
 	}
 
 	err = envconfig.Process(ServiceName, cfg)
