@@ -8,4 +8,5 @@ type GCEConfig struct {
 	WorkerSentryDSN string
 	UsePreemtible   bool
 	MaxCount        int
+	LokiURL         string
 }

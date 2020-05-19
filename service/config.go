@@ -17,4 +17,5 @@ type Config struct {
 	WorkerSentryDSN     string `envconfig:"WORKER_SENTRY_DSN"`
 	UsePreemtible       bool   `default:"true"`
 	MaxTranscodersCount int    `default:"20"`
+	LokiURL             string `envconfig:"LOKI_URL"`
 }

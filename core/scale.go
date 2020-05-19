@@ -30,6 +30,8 @@ spec:
         value: 'https://%s.videocoin.network/api/v1/sync'
       - name: WORKER_SENTRY_DSN
         value: '%s'
+      - name: LOKI_URL
+        value: '%s'
     stdin: false
     tty: false
   restartPolicy: Always
@@ -143,6 +145,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		s.GCECfg.Env,
 		s.GCECfg.Env,
 		s.GCECfg.WorkerSentryDSN,
+		s.GCECfg.LokiURL,
 	)
 	instance := &computev1.Instance{
 		Name:              instanceName,

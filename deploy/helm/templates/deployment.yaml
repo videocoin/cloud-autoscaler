@@ -56,6 +56,8 @@ spec:
               value: {{ .Values.secrets.workerSentryDsn | b64dec }}
             - name: SENTRY_DSN
               value: {{ .Values.secrets.sentryDsn | b64dec }}
+            - name: LOKI_URL
+              value: {{ .Values.secrets.lokiUrl | b64dec }}
             # - name: AUTOSCALER_RULESPATH
             #   value: /etc/autoscaler/rules.yml
           {{- if .Values.resources }}

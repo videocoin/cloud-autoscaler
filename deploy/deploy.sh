@@ -52,6 +52,7 @@ function get_vars() {
     readonly KUBE_CONTEXT=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/common/kube_context`
     readonly WORKER_SENTRY_DSN=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/secrets/workerSentryDsn`
     readonly SENTRY_DSN=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/secrets/sentryDsn`
+    readonly LOKI_URL=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/secrets/lokiUrl`
 }
 
 function deploy() {
@@ -61,9 +62,10 @@ function deploy() {
         --install \
         --set image.repository="gcr.io/${GCP_PROJECT}/${CHART_NAME}" \
         --set image.tag="${VERSION}" \
+        --set config.clusterEnv="${ENV}" \
         --set secrets.sentryDsn="${SENTRY_DSN}" \
         --set secrets.workerSentryDsn="${WORKER_SENTRY_DSN}" \
-        --set config.clusterEnv="${ENV}" \
+        --set secrets.lokiUrl="${LOKI_URL}" \
         --wait ${CHART_NAME} ${CHART_DIR}
 }
 

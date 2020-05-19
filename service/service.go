@@ -19,6 +19,7 @@ func NewService(cfg *Config) (*Service, error) {
 		WorkerSentryDSN: cfg.WorkerSentryDSN,
 		UsePreemtible:   cfg.UsePreemtible,
 		MaxCount:        cfg.MaxTranscodersCount,
+		LokiURL:         cfg.LokiURL,
 	}
 
 	if metadata.OnGCE() {
