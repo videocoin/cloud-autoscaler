@@ -50,6 +50,7 @@ function has_helm {
 function get_vars() {
     log_info "Getting variables..."
     readonly KUBE_CONTEXT=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/common/kube_context`
+    readonly REPLICAS_COUNT=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/vars/replicasCount`
     readonly WORKER_SENTRY_DSN=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/secrets/workerSentryDsn`
     readonly SENTRY_DSN=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/secrets/sentryDsn`
     readonly LOKI_URL=`consul kv get -http-addr=${CONSUL_ADDR} config/${ENV}/services/${CHART_NAME}/secrets/lokiUrl`
@@ -62,6 +63,7 @@ function deploy() {
         --install \
         --set image.repository="gcr.io/${GCP_PROJECT}/${CHART_NAME}" \
         --set image.tag="${VERSION}" \
+        --set replicasCount="${REPLICAS_COUNT}" \
         --set config.clusterEnv="${ENV}" \
         --set secrets.sentryDsn="${SENTRY_DSN}" \
         --set secrets.workerSentryDsn="${WORKER_SENTRY_DSN}" \
