@@ -42,13 +42,20 @@ prometheus:
             group_interval: 0s
             repeat_interval: 1m
             match_re:
-              alertname: NeedMoreTranscoders|NeedLessTranscoders
+              alertname: NeedMoreTranscoders|NeedMorePreemtibleTranscoders|NeedLessTranscoders
   serverFiles:
     alerts: |-
       ALERT NeedMoreTranscoders
-        IF clamp_max(sum(dispatcher_tasks_total{status="PENDING"}) WITHOUT (instance, job, status) - sum(autoscaler_instances{status="creating"}) WITHOUT (instance, job, status), 3) > 0
+        IF clamp_max(sum(dispatcher_tasks_total{status="PENDING",type="LIVE"}) WITHOUT (instance, job, status, type) - sum(autoscaler_instances{status="creating"}) WITHOUT (instance, job, status), 3) > 0
         ANNOTATIONS {
             summary = "Need to create {{ $value }} transcoders",
+            count = "{{ $value }}"
+        }
+
+      ALERT NeedMorePreemtibleTranscoders
+        IF clamp_max(sum(dispatcher_tasks_total{status="PENDING",type="VOD"}) WITHOUT (instance, job, status, type) - sum(autoscaler_instances{status="creating"}) WITHOUT (instance, job, status), 3) > 0
+        ANNOTATIONS {
+            summary = "Need to create preemtible {{ $value }} transcoders",
             count = "{{ $value }}"
         }
 

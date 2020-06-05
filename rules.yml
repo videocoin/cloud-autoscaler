@@ -6,6 +6,15 @@ rules:
     machineType: "n1-standard-2"
     diskSizeGb: 10
     sourceImage: "projects/cos-cloud/global/images/cos-stable-78-12499-89-0"
+    preemtible: false
+
+- alertname: NeedMorePreemtibleTranscoders
+  scale: up
+  instance:
+    machineType: "n1-standard-2"
+    diskSizeGb: 10
+    sourceImage: "projects/cos-cloud/global/images/cos-stable-78-12499-89-0"
+    preemtible: true
 
 - alertname: NeedLessTranscoders
   scale: down

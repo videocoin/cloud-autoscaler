@@ -1,0 +1,233 @@
+syntax = "proto3";
+
+package cloud.api.miners.v1;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+import "miners/v1/miner.proto";
+
+option go_package = "v1";
+option (gogoproto.marshaler_all) = false;
+option (gogoproto.unmarshaler_all) = false;
+option (gogoproto.sizer_all) = false;
+option (gogoproto.goproto_registration) = true;
+option (gogoproto.messagename_all) = true;
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+	info: {
+		title: "Videocoin api";
+		version: "1.0";
+	};
+	schemes: HTTPS;
+	consumes: "application/json";
+	produces: "application/json";
+	security_definitions: {
+		security: {
+			key: "ApiKeyAuth";
+			value: {
+				type: TYPE_API_KEY;
+				in: IN_HEADER;
+				name: "Authorization";
+			}
+		}
+	}
+	security: {
+		security_requirement: {
+			key: "ApiKeyAuth";
+			value: {};
+		}
+	}
+	responses: {
+		key: "401";
+		value: {
+			description: "Returned when the user is not logged in.";
+		}
+	}
+	responses: {
+		key: "403";
+		value: {
+			description: "Returned when the user does not have permission to access the resource.";
+		}
+	}
+	responses: {
+		key: "404";
+		value: {
+			description: "Returned when the resource does not exist.";
+			schema: {
+			    example: {
+                    value: '{ "message": "Not found", "fields": null }'
+                }
+			}
+		}
+	}
+};
+
+service MinersService {
+    rpc Create(CreateMinerRequest) returns (MinerResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/miners",
+            body: "*"
+        };
+    }
+
+     rpc All(google.protobuf.Empty) returns (MinerListResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/miners/all"
+        };
+    }
+
+    rpc Get(MinerRequest) returns (MinerResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/miners/{id}"
+        };
+    }
+
+    rpc Delete(MinerRequest) returns (MinerResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/miners/{id}"
+        };
+    }
+
+    rpc Update(UpdateMinerRequest) returns (MinerResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/miners/{id}"
+            body: "*"
+        };
+    }
+
+    rpc List(MinerRequest) returns (MinerListResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/miners"
+        };
+    }
+
+    rpc SetTags(SetTagsRequest) returns (MinerResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/miners/{id}/tags"
+            body: "*"
+        };
+    }
+
+    rpc Register(RegistrationRequest) returns (MinerResponse) {}
+    rpc GetByID(MinerRequest) returns (MinerResponse) {}
+    rpc Ping(PingRequest) returns (PingResponse) {}
+    rpc AssignTask(AssignTaskRequest) returns (google.protobuf.Empty) {}
+    rpc UnassignTask(AssignTaskRequest) returns (google.protobuf.Empty) {}
+    rpc GetForceTaskList(google.protobuf.Empty) returns (ForceTaskListResponse) {}
+    rpc GetMinersWithForceTask(google.protobuf.Empty) returns (MinersWithForceTaskResponse) {}
+    rpc GetMinersCandidates(MinersCandidatesRequest) returns (MinersCandidatesResponse) {}
+    rpc GetKey(KeyRequest) returns (KeyResponse) {}
+    rpc GetInternalMiner(InternalMinerRequest) returns (InternalMinerResponse) {}
+}
+
+message RegistrationRequest {
+    string client_id = 1 [(gogoproto.customname) = "ClientID"];
+    string address = 2;
+    string version = 3;
+}
+
+message MinerRequest {
+    string id = 1;
+}
+
+message UpdateMinerRequest {
+    string id = 1;
+    string name = 2;
+}
+
+message CreateMinerRequest {
+    string k = 1;
+    string s = 2;
+}
+
+message MinerResponse {
+    string id = 1;
+    string name = 2;
+    MinerStatus status = 3;
+    map<string, string> tags = 4;
+    SystemInfo system_info = 5;
+    CapacityInfo capacity_info = 6;
+    string user_id = 7 [(gogoproto.customname) = "UserID"];
+    string address = 8;
+    double reward = 9;
+	double total_stake = 10;           
+	double self_stake = 11;     
+    double delegated_stake = 12;
+    bool is_block = 13;
+    bool is_internal = 14;
+}
+
+message MinerListResponse {
+    repeated MinerResponse items = 1;
+}
+
+message PingRequest {
+    string client_id = 1 [(gogoproto.customname) = "ClientID"];
+    bytes system_info = 2;
+    bytes capacity_info = 3;
+}
+  
+message PingResponse {}
+
+message AssignTaskRequest {
+    string client_id = 1 [(gogoproto.customname) = "ClientID"];
+    string task_id = 2 [(gogoproto.customname) = "TaskID"];
+}
+
+message Tag {
+    string key = 1;
+    string value = 2;
+}
+
+message SetTagsRequest {
+    string id = 1;
+    repeated Tag tags = 2;
+}
+
+message ForceTaskListResponse {
+    repeated string ids = 1;
+}
+
+message MinerWithForceTaskResponse {
+    string id = 1;
+    string task_id = 2;
+}
+
+message MinersWithForceTaskResponse {
+    repeated MinerWithForceTaskResponse items = 1;
+}
+
+message MinersCandidatesRequest {
+    double encodeCapacity = 1;
+    double cpuCapacity = 2;
+}
+
+message MinerCandidateResponse {
+    string id = 1 [(gogoproto.customname) = "ID"];
+    double stake = 2;
+    bool is_internal = 3;
+}
+
+message MinersCandidatesResponse {
+    repeated MinerCandidateResponse items = 1;
+}
+
+message KeyRequest {
+    string client_id = 1 [(gogoproto.customname) = "ClientID"];
+}
+
+message KeyResponse {
+    string key = 1;
+}
+
+message InternalMinerRequest {}
+
+message InternalMinerResponse {
+    string id = 1 [(gogoproto.customname) = "ID"];
+    string key = 2;
+    string secret = 3;
+    string task_id = 4 [(gogoproto.customname) = "TaskID"];
+}

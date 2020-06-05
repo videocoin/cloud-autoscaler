@@ -11,8 +11,11 @@ require (
 	github.com/prometheus/alertmanager v0.20.0
 	github.com/prometheus/client_golang v1.5.1
 	github.com/sirupsen/logrus v1.5.0
-	github.com/videocoin/cloud-pkg v0.1.0
+	github.com/videocoin/cloud-api v1.0.0
+	github.com/videocoin/cloud-pkg v1.0.0
 	google.golang.org/api v0.22.0
 )
 
 replace github.com/videocoin/cloud-pkg => ../cloud-pkg
+
+replace github.com/videocoin/cloud-api => ../cloud-api

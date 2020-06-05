@@ -9,6 +9,7 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/sirupsen/logrus"
+	dispatcherv1 "github.com/videocoin/cloud-api/dispatcher/v1"
 	"github.com/videocoin/cloud-autoscaler/metrics"
 	"github.com/videocoin/cloud-autoscaler/types"
 	computev1 "google.golang.org/api/compute/v1"
@@ -31,6 +32,8 @@ spec:
       - name: WORKER_SENTRY_DSN
         value: '%s'
       - name: LOKI_URL
+        value: '%s'
+      - name: TASK_TYPE
         value: '%s'
     stdin: false
     tty: false
@@ -137,7 +140,11 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	}
 
 	instanceName := fmt.Sprintf("transcoder-%s-%s", s.GCECfg.Env, randString(12))
-	dockerImage := fmt.Sprintf("gcr.io/%s/transcoder:latest", s.GCECfg.Project)
+	dockerImage := fmt.Sprintf("gcr.io/%s/worker:latest", s.GCECfg.Project)
+	taskType := dispatcherv1.TaskTypeVOD.String()
+	if rule.Instance != nil && !rule.Instance.Preemtible {
+		taskType = dispatcherv1.TaskTypeLive.String()
+	}
 	containerDecl := fmt.Sprintf(
 		containerDeclTpl,
 		instanceName,
@@ -146,6 +153,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		s.GCECfg.Env,
 		s.GCECfg.WorkerSentryDSN,
 		s.GCECfg.LokiURL,
+		taskType,
 	)
 	instance := &computev1.Instance{
 		Name:              instanceName,
@@ -167,7 +175,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 			},
 		},
 		Scheduling: &computev1.Scheduling{
-			Preemptible: s.GCECfg.UsePreemtible,
+			Preemptible: rule.Instance.Preemtible,
 		},
 	}
 
