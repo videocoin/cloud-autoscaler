@@ -1,4 +1,4 @@
-package types
+package autoscaler
 
 import (
 	"errors"
@@ -12,6 +12,16 @@ const (
 	ScaleUp   = "up"
 	ScaleDown = "down"
 )
+
+type Instance struct {
+	Project     string `yaml:"project"`
+	Region      string `yaml:"region"`
+	Zone        string `yaml:"zone"`
+	MachineType string `yaml:"machineType"`
+	DiskSizeGb  int64  `yaml:"diskSizeGb"`
+	SourceImage string `yaml:"sourceImage"`
+	Preemtible  bool   `yaml:"preemtible"`
+}
 
 type Rule struct {
 	AlertName string    `yaml:"alertname"`

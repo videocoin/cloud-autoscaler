@@ -1,8 +1,9 @@
-package core
+package autoscaler
 
 import (
+	"context"
 	"fmt"
-	"net/http"
+	"google.golang.org/api/option"
 	"strings"
 	"sync"
 	"time"
@@ -10,8 +11,6 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/sirupsen/logrus"
 	dispatcherv1 "github.com/videocoin/cloud-api/dispatcher/v1"
-	"github.com/videocoin/cloud-autoscaler/metrics"
-	"github.com/videocoin/cloud-autoscaler/types"
 	computev1 "google.golang.org/api/compute/v1"
 )
 
@@ -26,9 +25,7 @@ spec:
       - name: LOGLEVEL
         value: 'debug'
       - name: DISPATCHER_ADDR
-        value: 'd.%s.videocoin.network:5008'
-      - name: SYNCER_URL
-        value: 'https://%s.videocoin.network/api/v1/sync'
+        value: '%s'
       - name: WORKER_SENTRY_DSN
         value: '%s'
       - name: LOKI_URL
@@ -40,15 +37,44 @@ spec:
   restartPolicy: Always
 `
 
-func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
+type AutoScaler struct {
+	logger  *logrus.Entry
+	compute *computev1.Service
+	Metrics *Metrics
+	Rules   Rules
+	GCECfg  *GCEConfig
+}
+
+func NewAutoScaler(
+	logger *logrus.Entry,
+	metrics *Metrics,
+	rules Rules,
+	gceCfg *GCEConfig,
+) (*AutoScaler, error) {
+	ctx := context.Background()
+	computeSvc, err := computev1.NewService(ctx, option.WithAPIKey(gceCfg.APIKey))
+	if err != nil {
+		return nil, err
+	}
+
+	return &AutoScaler{
+		logger:  logger,
+		compute: computeSvc,
+		Metrics: metrics,
+		Rules:   rules,
+		GCECfg:  gceCfg,
+	}, nil
+}
+
+func (s *AutoScaler) ScaleUp(rule Rule, count uint) error {
 	s.logger.WithField("machine_type", rule.Instance.MachineType).Info("scaling up")
 
 	instances, err := s.compute.Instances.
-		List(s.GCECfg.Project, s.GCECfg.Zone).
+		List(rule.Instance.Project, rule.Instance.Zone).
 		Filter(fmt.Sprintf("(name=transcoder-%s-*) AND (status=RUNNING)", s.GCECfg.Env)).
 		Do()
 	if err != nil {
-		s.logger.WithError(err).Error("failed to get trascoder instances")
+		s.logger.WithError(err).Error("failed to get transcoder instances")
 	} else {
 		if len(instances.Items) >= s.GCECfg.MaxCount {
 			s.logger.Warning("max count of transcoders is already run")
@@ -59,8 +85,8 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 	floatCount := float64(count)
 
 	m := s.Metrics.Instances
-	m.WithLabelValues(metrics.InstanceStatusCreating, rule.Instance.MachineType).Add(floatCount)
-	defer m.WithLabelValues(metrics.InstanceStatusCreating, rule.Instance.MachineType).Sub(floatCount)
+	m.WithLabelValues(InstanceStatusCreating, rule.Instance.MachineType).Add(floatCount)
+	defer m.WithLabelValues(InstanceStatusCreating, rule.Instance.MachineType).Sub(floatCount)
 
 	var wg sync.WaitGroup
 	c := count
@@ -89,7 +115,7 @@ func (s *AutoScaler) ScaleUp(rule types.Rule, count uint) error {
 	return nil
 }
 
-func (s *AutoScaler) ScaleDown(rule types.Rule, instanceName string) error {
+func (s *AutoScaler) ScaleDown(rule Rule, instanceName string) error {
 	s.logger.Info("scaling down")
 
 	go func() {
@@ -101,7 +127,7 @@ func (s *AutoScaler) ScaleDown(rule types.Rule, instanceName string) error {
 	return nil
 }
 
-func (s *AutoScaler) createInstance(rule types.Rule) error {
+func (s *AutoScaler) createInstance(rule Rule) error {
 	disks := []*computev1.AttachedDisk{
 		{
 			AutoDelete: true,
@@ -117,8 +143,8 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		{
 			Subnetwork: fmt.Sprintf(
 				"projects/%s/regions/%s/subnetworks/%s",
-				s.GCECfg.Project,
-				s.GCECfg.Region,
+				rule.Instance.Project,
+				rule.Instance.Region,
 				s.GCECfg.Env,
 			),
 			AccessConfigs: []*computev1.AccessConfig{
@@ -140,7 +166,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	}
 
 	instanceName := fmt.Sprintf("transcoder-%s-%s", s.GCECfg.Env, randString(12))
-	dockerImage := fmt.Sprintf("gcr.io/%s/worker:latest", s.GCECfg.Project)
+	dockerImage := fmt.Sprintf("gcr.io/%s/worker:latest", rule.Instance.Project)
 	taskType := dispatcherv1.TaskTypeVOD.String()
 	if rule.Instance != nil && !rule.Instance.Preemtible {
 		taskType = dispatcherv1.TaskTypeLive.String()
@@ -149,19 +175,18 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 		containerDeclTpl,
 		instanceName,
 		dockerImage,
-		s.GCECfg.Env,
-		s.GCECfg.Env,
+		s.GCECfg.DispatcherAddr,
 		s.GCECfg.WorkerSentryDSN,
 		s.GCECfg.LokiURL,
 		taskType,
 	)
 	instance := &computev1.Instance{
 		Name:              instanceName,
-		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", s.GCECfg.Zone, rule.Instance.MachineType),
+		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", rule.Instance.Zone, rule.Instance.MachineType),
 		Disks:             disks,
 		NetworkInterfaces: networkInterfaces,
 		ServiceAccounts:   serviceAccounts,
-		Zone:              s.GCECfg.Zone,
+		Zone:              rule.Instance.Zone,
 		Metadata: &computev1.Metadata{
 			Items: []*computev1.MetadataItems{
 				{
@@ -181,7 +206,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 
 	logger := s.logger.WithField("instance", instance.Name)
 
-	_, err := s.compute.Instances.Insert(s.GCECfg.Project, s.GCECfg.Zone, instance).Do()
+	_, err := s.compute.Instances.Insert(rule.Instance.Project, rule.Instance.Zone, instance).Do()
 	if err != nil {
 		return err
 	}
@@ -189,7 +214,7 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 	logger.Info("creating instance")
 
 	for {
-		newInstance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, instance.Name).Do()
+		newInstance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, instance.Name).Do()
 		if err != nil {
 			return err
 		}
@@ -210,57 +235,25 @@ func (s *AutoScaler) createInstance(rule types.Rule) error {
 			continue
 		}
 
-		if newInstance.NetworkInterfaces[0].NetworkIP != "" {
-			healthAddr := fmt.Sprintf(
-				"http://%s:8888/healthz",
-				newInstance.NetworkInterfaces[0].NetworkIP,
-			)
-
-			logger.WithFields(logrus.Fields{
-				"name":        newInstance.Name,
-				"health_addr": healthAddr,
-			}).Info("getting health")
-
-			resp, err := http.Get(healthAddr)
-			if err != nil {
-				logger.WithFields(logrus.Fields{
-					"name":        newInstance.Name,
-					"health_addr": healthAddr,
-				}).Warnf("failed to get health: %s", err)
-
-				time.Sleep(time.Second * 10)
-				continue
-			}
-
-			if resp != nil && resp.StatusCode == 200 {
-				logger.WithFields(logrus.Fields{
-					"name":        newInstance.Name,
-					"health_addr": healthAddr,
-				}).Info("transcoder has been started")
-
-				break
-			}
-		}
-
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 60 * 2)
 	}
 
 	return nil
 }
 
-func (s *AutoScaler) removeInstance(_ types.Rule, name string) error {
+func (s *AutoScaler) removeInstance(rule Rule, name string) error {
 	logger := s.logger.WithField("instance", name)
 
-	instance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, name).Do()
+	instance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, name).Do()
 	if err != nil {
 		return err
 	}
 
 	m := s.Metrics.Instances
-	m.WithLabelValues(metrics.InstanceStatusRemoving, instance.MachineType).Inc()
-	defer m.WithLabelValues(metrics.InstanceStatusRemoving, instance.MachineType).Dec()
+	m.WithLabelValues(InstanceStatusRemoving, instance.MachineType).Inc()
+	defer m.WithLabelValues(InstanceStatusRemoving, instance.MachineType).Dec()
 
-	_, err = s.compute.Instances.Delete(s.GCECfg.Project, s.GCECfg.Zone, instance.Name).Do()
+	_, err = s.compute.Instances.Delete(rule.Instance.Project, rule.Instance.Zone, instance.Name).Do()
 	if err != nil {
 		return err
 	}
@@ -269,7 +262,7 @@ func (s *AutoScaler) removeInstance(_ types.Rule, name string) error {
 
 	c := 0
 	for {
-		instance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, name).Do()
+		instance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, name).Do()
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "googleapi: Error 404:") {
 				logger.Info("instance has been removed")

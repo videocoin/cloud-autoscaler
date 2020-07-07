@@ -3,7 +3,7 @@ module github.com/videocoin/cloud-autoscaler
 go 1.14
 
 require (
-	cloud.google.com/go v0.56.0
+	cloud.google.com/go v0.56.0 // indirect
 	github.com/AlekSi/pointer v1.1.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/kelseyhightower/envconfig v1.4.0

@@ -1,17 +1,15 @@
 package main
 
 import (
+	"github.com/ghodss/yaml"
+	"github.com/kelseyhightower/envconfig"
+	autoscaler "github.com/videocoin/cloud-autoscaler"
+	"github.com/videocoin/cloud-pkg/logger"
+	"github.com/videocoin/cloud-pkg/tracer"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/ghodss/yaml"
-	"github.com/kelseyhightower/envconfig"
-	"github.com/videocoin/cloud-autoscaler/service"
-	"github.com/videocoin/cloud-autoscaler/types"
-	"github.com/videocoin/cloud-pkg/logger"
-	"github.com/videocoin/cloud-pkg/tracer"
 )
 
 var (
@@ -29,7 +27,7 @@ func main() {
 		defer closer.Close()
 	}
 
-	cfg := &service.Config{
+	cfg := &autoscaler.Config{
 		Name:    ServiceName,
 		Version: Version,
 		Logger:  log,
@@ -45,7 +43,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	asRules := new(types.AutoScaleRules)
+	asRules := new(autoscaler.AutoScaleRules)
 	err = yaml.Unmarshal(rulesContent, &asRules)
 	if err != nil {
 		log.Fatal(err)
@@ -54,7 +52,7 @@ func main() {
 	cfg.Rules = asRules.Rules
 	cfg.Logger = log
 
-	svc, err := service.NewService(cfg)
+	svc, err := autoscaler.NewApp(cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -68,7 +66,7 @@ func main() {
 	go func() {
 		sig := <-signals
 
-		log.Infof("recieved signal %s", sig)
+		log.Infof("received signal %s", sig)
 		exit <- true
 	}()
 

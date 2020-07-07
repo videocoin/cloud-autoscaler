@@ -1,4 +1,4 @@
-package core
+package autoscaler
 
 import (
 	"math/rand"

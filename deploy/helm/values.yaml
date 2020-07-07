@@ -2,19 +2,33 @@ replicasCount: 1
 maxUnavailableCount: 1
 
 image:
-  repository: gcr.io/videocoin-network/autoscaler
+  repository: registry.videocoin.net/cloud/autoscaler
   tag: latest
   pullPolicy: Always
+  pullSecrets: 
+  - name: regcred
 
 service:
   name: http
   type: NodePort
-  externalPort: 80
-  internalPort: 8013
+  ports:
+    http: 8013
 
-resources: {}
-config: {}
-secrets: {}
+serviceAccount:
+  name: default
+
+resources:
+  limits:
+   cpu: 200m
+   memory: 256Mi
+  requests:
+   cpu: 200m
+   memory: 256Mi
+
+config:
+  CLUSTER_ENV: dev
+  DISPATCHER_ADDR: d.dev.videocoin.net:5008
+  GCE_API_KEY: "AIzaSyAIzJbgOs8VnaJRRJpOPxSMePoTsX_mL5g"
 
 prometheus:
   nodeExporter:
@@ -32,7 +46,7 @@ prometheus:
         - name: default-receiver
         - name: autoscaler
           webhook_configs:
-            - url: http://autoscaler/prometheus/webhook
+            - url: http://autoscaler.console.svc.cluster.local:8013/prometheus/webhook
 
       route:
         receiver: default-receiver
@@ -84,8 +98,10 @@ prometheus:
         - job_name: autoscaler
           static_configs:
             - targets:
-              - autoscaler:80
+              - autoscaler:8013
         - job_name: miners
           static_configs:
             - targets:
               - miners:15011
+
+annotations: {}
