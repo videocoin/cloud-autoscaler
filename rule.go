@@ -14,9 +14,6 @@ const (
 )
 
 type Instance struct {
-	Project     string `yaml:"project"`
-	Region      string `yaml:"region"`
-	Zone        string `yaml:"zone"`
 	MachineType string `yaml:"machineType"`
 	DiskSizeGb  int64  `yaml:"diskSizeGb"`
 	SourceImage string `yaml:"sourceImage"`

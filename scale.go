@@ -70,7 +70,7 @@ func (s *AutoScaler) ScaleUp(rule Rule, count uint) error {
 	s.logger.WithField("machine_type", rule.Instance.MachineType).Info("scaling up")
 
 	instances, err := s.compute.Instances.
-		List(rule.Instance.Project, rule.Instance.Zone).
+		List(s.GCECfg.Project, s.GCECfg.Zone).
 		Filter(fmt.Sprintf("(name=transcoder-%s-*) AND (status=RUNNING)", s.GCECfg.Env)).
 		Do()
 	if err != nil {
@@ -143,8 +143,8 @@ func (s *AutoScaler) createInstance(rule Rule) error {
 		{
 			Subnetwork: fmt.Sprintf(
 				"projects/%s/regions/%s/subnetworks/%s",
-				rule.Instance.Project,
-				rule.Instance.Region,
+				s.GCECfg.Project,
+				s.GCECfg.Region,
 				s.GCECfg.Env,
 			),
 			AccessConfigs: []*computev1.AccessConfig{
@@ -166,7 +166,7 @@ func (s *AutoScaler) createInstance(rule Rule) error {
 	}
 
 	instanceName := fmt.Sprintf("transcoder-%s-%s", s.GCECfg.Env, randString(12))
-	dockerImage := fmt.Sprintf("gcr.io/%s/worker:latest", rule.Instance.Project)
+	dockerImage := fmt.Sprintf("gcr.io/%s/worker:latest", s.GCECfg.Project)
 	taskType := dispatcherv1.TaskTypeVOD.String()
 	if rule.Instance != nil && !rule.Instance.Preemtible {
 		taskType = dispatcherv1.TaskTypeLive.String()
@@ -182,11 +182,11 @@ func (s *AutoScaler) createInstance(rule Rule) error {
 	)
 	instance := &computev1.Instance{
 		Name:              instanceName,
-		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", rule.Instance.Zone, rule.Instance.MachineType),
+		MachineType:       fmt.Sprintf("zones/%s/machineTypes/%s", s.GCECfg.Zone, rule.Instance.MachineType),
 		Disks:             disks,
 		NetworkInterfaces: networkInterfaces,
 		ServiceAccounts:   serviceAccounts,
-		Zone:              rule.Instance.Zone,
+		Zone:              s.GCECfg.Zone,
 		Metadata: &computev1.Metadata{
 			Items: []*computev1.MetadataItems{
 				{
@@ -206,7 +206,7 @@ func (s *AutoScaler) createInstance(rule Rule) error {
 
 	logger := s.logger.WithField("instance", instance.Name)
 
-	_, err := s.compute.Instances.Insert(rule.Instance.Project, rule.Instance.Zone, instance).Do()
+	_, err := s.compute.Instances.Insert(s.GCECfg.Project, s.GCECfg.Zone, instance).Do()
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func (s *AutoScaler) createInstance(rule Rule) error {
 	logger.Info("creating instance")
 
 	for {
-		newInstance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, instance.Name).Do()
+		newInstance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, instance.Name).Do()
 		if err != nil {
 			return err
 		}
@@ -245,7 +245,7 @@ func (s *AutoScaler) createInstance(rule Rule) error {
 func (s *AutoScaler) removeInstance(rule Rule, name string) error {
 	logger := s.logger.WithField("instance", name)
 
-	instance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, name).Do()
+	instance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, name).Do()
 	if err != nil {
 		return err
 	}
@@ -254,7 +254,7 @@ func (s *AutoScaler) removeInstance(rule Rule, name string) error {
 	m.WithLabelValues(InstanceStatusRemoving, instance.MachineType).Inc()
 	defer m.WithLabelValues(InstanceStatusRemoving, instance.MachineType).Dec()
 
-	_, err = s.compute.Instances.Delete(rule.Instance.Project, rule.Instance.Zone, instance.Name).Do()
+	_, err = s.compute.Instances.Delete(s.GCECfg.Project, s.GCECfg.Zone, instance.Name).Do()
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func (s *AutoScaler) removeInstance(rule Rule, name string) error {
 
 	c := 0
 	for {
-		instance, err := s.compute.Instances.Get(rule.Instance.Project, rule.Instance.Zone, name).Do()
+		instance, err := s.compute.Instances.Get(s.GCECfg.Project, s.GCECfg.Zone, name).Do()
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "googleapi: Error 404:") {
 				logger.Info("instance has been removed")

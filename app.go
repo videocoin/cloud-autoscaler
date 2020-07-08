@@ -13,6 +13,9 @@ func NewApp(cfg *Config) (*App, error) {
 		LokiURL:         cfg.LokiURL,
 		DispatcherAddr:  cfg.DispatcherAddr,
 		SA:              cfg.GCESA,
+		Project:         cfg.GCEProject,
+		Region:          cfg.GCERegion,
+		Zone:            cfg.GCEZone,
 	}
 
 	metrics := NewMetrics(cfg.Name, cfg.Rules)

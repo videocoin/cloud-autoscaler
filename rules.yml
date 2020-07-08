@@ -3,9 +3,6 @@ rules:
 - alertname: NeedMoreTranscoders
   scale: up
   instance:
-    project: videocoin-network
-    region: us-central1
-    zone: us-central1-a
     machineType: "n1-standard-2"
     diskSizeGb: 10
     sourceImage: "projects/cos-cloud/global/images/cos-stable-78-12499-89-0"
@@ -14,9 +11,6 @@ rules:
 - alertname: NeedMorePreemtibleTranscoders
   scale: up
   instance:
-    project: videocoin-network
-    region: us-central1
-    zone: us-central1-a
     machineType: "n1-standard-2"
     diskSizeGb: 10
     sourceImage: "projects/cos-cloud/global/images/cos-stable-78-12499-89-0"
@@ -24,7 +18,3 @@ rules:
 
 - alertname: NeedLessTranscoders
   scale: down
-  instance:
-    project: videocoin-network
-    region: us-central1
-    zone: us-central1-a
