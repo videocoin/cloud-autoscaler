@@ -12,7 +12,7 @@ func NewApp(cfg *Config) (*App, error) {
 		MaxCount:        cfg.MaxTranscodersCount,
 		LokiURL:         cfg.LokiURL,
 		DispatcherAddr:  cfg.DispatcherAddr,
-		APIKey:          cfg.GCEApiKey,
+		SA:              cfg.GCESA,
 	}
 
 	metrics := NewMetrics(cfg.Name, cfg.Rules)

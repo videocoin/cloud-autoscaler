@@ -14,7 +14,7 @@ type Config struct {
 	RulesPath           string `envconfig:"RULES_PATH" default:"rules.yml"`
 	ClusterEnv          string `envconfig:"CLUSTER_ENV" default:"dev"`
 	DispatcherAddr      string `envconfig:"DISPATCHER_ADDR" required:"true"`
-	GCEApiKey           string `envconfig:"GCE_API_KEY" required:"true"`
+	GCESA               string `envconfig:"GCE_SA" required:"true"`
 	MaxTranscodersCount int    `envconfig:"MAX_WORKERS" default:"20"`
 	LokiURL             string `envconfig:"LOKI_URL"`
 	WorkerSentryDSN     string `envconfig:"WORKER_SENTRY_DSN"`
@@ -26,5 +26,5 @@ type GCEConfig struct {
 	MaxCount        int
 	LokiURL         string
 	DispatcherAddr  string
-	APIKey          string
+	SA              string
 }

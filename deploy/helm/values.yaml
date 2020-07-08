@@ -25,10 +25,21 @@ resources:
    cpu: 200m
    memory: 256Mi
 
-config:
-  CLUSTER_ENV: dev
-  DISPATCHER_ADDR: d.dev.videocoin.net:5008
-  GCE_API_KEY: "AIzaSyAIzJbgOs8VnaJRRJpOPxSMePoTsX_mL5g"
+config: {}
+
+annotations:
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/role: "console-miners"
+  vault.hashicorp.com/agent-inject-secret-common: "videocoin/v1/networks/everest-dev/console/common"
+  vault.hashicorp.com/agent-inject-secret-config: "videocoin/v1/networks/everest-dev/console/autoscaler"
+  vault.hashicorp.com/agent-inject-template-common: |
+    {{ with secret "videocoin/v1/networks/everest-dev/console/common" }}{{ range $k, $v := .Data }}
+    export {{ $k }}='{{ $v }}'
+    {{ end }}{{ end }}
+  vault.hashicorp.com/agent-inject-template-config: |
+    {{ with secret "videocoin/v1/networks/everest-dev/console/autoscaler" }}{{ range $k, $v := .Data }}
+    export {{ $k }}='{{ $v }}'
+    {{ end }}{{ end }}
 
 prometheus:
   nodeExporter:
@@ -103,5 +114,3 @@ prometheus:
           static_configs:
             - targets:
               - miners:15011
-
-annotations: {}

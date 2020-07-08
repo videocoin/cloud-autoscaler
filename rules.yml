@@ -24,3 +24,7 @@ rules:
 
 - alertname: NeedLessTranscoders
   scale: down
+  instance:
+    project: videocoin-network
+    region: us-central1
+    zone: us-central1-a

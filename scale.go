@@ -52,7 +52,7 @@ func NewAutoScaler(
 	gceCfg *GCEConfig,
 ) (*AutoScaler, error) {
 	ctx := context.Background()
-	computeSvc, err := computev1.NewService(ctx, option.WithAPIKey(gceCfg.APIKey))
+	computeSvc, err := computev1.NewService(ctx, option.WithCredentialsJSON([]byte(gceCfg.SA)))
 	if err != nil {
 		return nil, err
 	}
@@ -236,6 +236,7 @@ func (s *AutoScaler) createInstance(rule Rule) error {
 		}
 
 		time.Sleep(time.Second * 60 * 2)
+		break
 	}
 
 	return nil

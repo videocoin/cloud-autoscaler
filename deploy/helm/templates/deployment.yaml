@@ -13,13 +13,12 @@ spec:
       maxUnavailable: {{ .Values.maxUnavailableCount }}
   template:
     metadata:
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "{{ .Values.service.internalPort }}"
       labels:
         app: {{ .Chart.Name }}
-    {{- with .Values.annotations }}
       annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.service.ports.http }}"
+    {{- with .Values.annotations }}
         {{- toYaml . | nindent 8 }}
     {{- end }}
     spec:
@@ -33,6 +32,7 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c", "source /vault/secrets/common && source /vault/secrets/config && /autoscaler"]
           ports:
             - containerPort: {{ .Values.service.ports.http }}
           livenessProbe:
@@ -56,12 +56,6 @@ spec:
               value: debug
             - name: ADDR
               value: $(POD_IP):{{ .Values.service.ports.http }}
-            - name: CLUSTER_ENV
-              value: {{ .Values.config.CLUSTER_ENV }}
-            - name: DISPATCHER_ADDR
-              value: {{ .Values.config.DISPATCHER_ADDR }}
-            - name: GCE_API_KEY
-              value: {{ .Values.config.GCE_API_KEY }}
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -71,9 +65,9 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
           volumeMounts:
-            - name: config
+            - name: config-files
               mountPath: /etc/autoscaler
       volumes:
-        - name: config
+        - name: config-files
           configMap:
-            name: {{ .Chart.Name }}
+            name: {{ .Chart.Name }}-files
