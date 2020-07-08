@@ -29,7 +29,7 @@ config: {}
 
 annotations:
   vault.hashicorp.com/agent-inject: "true"
-  vault.hashicorp.com/role: "console-miners"
+  vault.hashicorp.com/role: "console-autoscaler"
   vault.hashicorp.com/agent-inject-secret-common: "videocoin/v1/networks/everest-dev/console/common"
   vault.hashicorp.com/agent-inject-secret-config: "videocoin/v1/networks/everest-dev/console/autoscaler"
   vault.hashicorp.com/agent-inject-template-common: |
