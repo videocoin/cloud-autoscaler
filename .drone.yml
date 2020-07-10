@@ -21,6 +21,7 @@ steps:
         from_secret: kube_config
     commands:
       - echo $KUBE_CONFIG | base64 -d > kube.config
+      - helm --kubeconfig=kube.config dependencies update ./deploy/helm
       - helm --kubeconfig=kube.config upgrade -i --wait --set image.tag=$DRONE_COMMIT_SHA -n console autoscaler ./deploy/helm
 
 trigger:
