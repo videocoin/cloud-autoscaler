@@ -18,7 +18,7 @@ steps:
     image: devth/helm:v3.1.1
     environment:
       KUBE_CONFIG:
-        from_secret: kube_config
+        from_secret: dev_kube_config
     commands:
       - echo $KUBE_CONFIG | base64 -d > kube.config
       - helm --kubeconfig=kube.config dependencies update ./deploy/helm
