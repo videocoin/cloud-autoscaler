@@ -42,6 +42,22 @@ annotations:
     {{ end }}{{ end }}
 
 prometheus:
+  server:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  autoscaler:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
   nodeExporter:
     enabled: false
   kubeStateMetrics:
