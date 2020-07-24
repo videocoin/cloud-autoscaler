@@ -3,7 +3,6 @@ GOARCH?=amd64
 
 NAME=autoscaler
 VERSION?=$$(git describe --abbrev=0)-$$(git rev-parse --abbrev-ref HEAD)-$$(git rev-parse --short HEAD)
-ENV?=dev
 
 REGISTRY_SERVER?=registry.videocoin.net
 REGISTRY_PROJECT?=cloud
@@ -39,4 +38,4 @@ docker-push:
 	docker push ${REGISTRY_SERVER}/${REGISTRY_PROJECT}/${NAME}:${VERSION}
 
 deploy:
-	cd deploy && helm upgrade -i --wait --set image.tag="${VERSION}" -n console autoscaler ./helm
+	helm upgrade -i --wait --set image.tag="${VERSION}" -n console autoscaler ./deploy/helm
