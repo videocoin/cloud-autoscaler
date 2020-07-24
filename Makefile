@@ -2,7 +2,7 @@ GOOS?=linux
 GOARCH?=amd64
 
 NAME=autoscaler
-VERSION?=$$(git describe --abbrev=0)-$$(git rev-parse --abbrev-ref HEAD)-$$(git rev-parse --short HEAD)
+VERSION?=$$(git rev-parse HEAD)
 
 REGISTRY_SERVER?=registry.videocoin.net
 REGISTRY_PROJECT?=cloud
