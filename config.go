@@ -10,7 +10,7 @@ type Config struct {
 	Version string        `envconfig:"-"`
 	Rules   Rules         `envconfig:"-"`
 
-	Addr                string `envconfig:"ADDR" default:"0.0.0.0:5030"`
+	Addr                string `envconfig:"ADDR" default:"0.0.0.0:8013"`
 	RulesPath           string `envconfig:"RULES_PATH" default:"rules.yml"`
 	ClusterEnv          string `envconfig:"CLUSTER_ENV" default:"dev"`
 	DispatcherAddr      string `envconfig:"DISPATCHER_ADDR" required:"true"`
