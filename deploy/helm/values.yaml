@@ -9,8 +9,6 @@ image:
   - name: regcred
 
 service:
-  name: http
-  type: NodePort
   ports:
     http: 8013
 
@@ -22,8 +20,8 @@ resources:
    cpu: 200m
    memory: 256Mi
   requests:
-   cpu: 200m
-   memory: 256Mi
+   cpu: 10m
+   memory: 16Mi
 
 config: {}
 
