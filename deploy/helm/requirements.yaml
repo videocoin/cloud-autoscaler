@@ -1,4 +1,0 @@
-dependencies:
-- name: prometheus
-  version: 0.0.1
-  repository: https://videocoin-charts.storage.googleapis.com/
