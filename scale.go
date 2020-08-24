@@ -3,7 +3,6 @@ package autoscaler
 import (
 	"context"
 	"fmt"
-	"google.golang.org/api/option"
 	"strings"
 	"sync"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	dispatcherv1 "github.com/videocoin/cloud-api/dispatcher/v1"
 	computev1 "google.golang.org/api/compute/v1"
+	"google.golang.org/api/option"
 )
 
 var containerDeclTpl = `
@@ -142,10 +142,9 @@ func (s *AutoScaler) createInstance(rule Rule) error {
 	networkInterfaces := []*computev1.NetworkInterface{
 		{
 			Subnetwork: fmt.Sprintf(
-				"projects/%s/regions/%s/subnetworks/%s",
+				"projects/%s/regions/%s/subnetworks/default",
 				s.GCECfg.Project,
 				s.GCECfg.Region,
-				s.GCECfg.Env,
 			),
 			AccessConfigs: []*computev1.AccessConfig{
 				{
