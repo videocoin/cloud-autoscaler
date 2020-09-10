@@ -71,7 +71,7 @@ prometheus:
         - name: default-receiver
         - name: autoscaler
           webhook_configs:
-            - url: http://autoscaler.console.svc.cluster.local:8013/prometheus/webhook
+            - url: http://autoscaler:8013/prometheus/webhook
 
       route:
         receiver: default-receiver
